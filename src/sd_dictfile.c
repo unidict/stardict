@@ -7,6 +7,7 @@
 
 
 #include "sd_dictfile.h"
+#include "sd_port.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
