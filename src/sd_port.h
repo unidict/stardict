@@ -9,8 +9,12 @@
 #ifndef sd_port_h
 #define sd_port_h
 
+#include <string.h>
+#include <stdlib.h>
+
 #ifdef _WIN32
     #include <io.h>
+    #include <fcntl.h>
     #include <sys/stat.h>
     #include <winsock2.h>
     #pragma comment(lib, "ws2_32.lib")
@@ -25,6 +29,18 @@
     #define SD_ISDIR(m)       ((m) & _S_IFDIR)
     #define SD_O_RDONLY       _O_RDONLY
     #define SD_STAT_STRUCT    struct _stat
+
+    // MSVC does not provide strndup
+    static inline char *sd_strndup(const char *s, size_t n) {
+        size_t len = strnlen(s, n);
+        char *p = (char *)malloc(len + 1);
+        if (p) {
+            memcpy(p, s, len);
+            p[len] = '\0';
+        }
+        return p;
+    }
+    #define strndup sd_strndup
 #else
     #include <sys/stat.h>
     #include <fcntl.h>
