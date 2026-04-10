@@ -1,0 +1,11 @@
+*.xcuserstate
+.claude/
+.DS_Store
+
+# CMake
+build/
+cmake-build-*/
+CMakeUserPresets.json
+
+# Xcode
+xcuserdata/
