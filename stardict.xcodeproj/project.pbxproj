@@ -35,6 +35,7 @@
 /* Begin PBXFileReference section */
 		692F0EDF2F85F91B0037745D /* libstardict.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libstardict.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		692F11EA2F87795B0037745D /* sd_tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sd_tests; sourceTree = BUILT_PRODUCTS_DIR; };
+		692F1DBF2F91F5D10037745D /* dictzip.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = dictzip.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -47,8 +48,6 @@
 				sd_dictfile_index.h,
 				sd_dictfile.c,
 				sd_dictfile.h,
-				sd_dictzip.c,
-				sd_dictzip.h,
 				sd_stardict_ifo.c,
 				sd_stardict_ifo.h,
 				sd_stardict_res.c,
@@ -62,6 +61,13 @@
 			);
 			target = 692F0EDE2F85F91B0037745D /* stardict */;
 		};
+		692F1DD32F91F5E10037745D /* Exceptions for "deps" folder in "stardict" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				dictzip/tests/main.c,
+			);
+			target = 692F0EDE2F85F91B0037745D /* stardict */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
@@ -72,7 +78,6 @@
 				sd_dictd.h,
 				sd_dictfile_index.h,
 				sd_dictfile.h,
-				sd_dictzip.h,
 				sd_stardict_ifo.h,
 				sd_stardict_res.h,
 				sd_stardict_syn.h,
@@ -95,6 +100,14 @@
 		692F12B02F892DA70037745D /* tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = tests;
+			sourceTree = "<group>";
+		};
+		692F1DC22F91F5D10037745D /* deps */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				692F1DD32F91F5E10037745D /* Exceptions for "deps" folder in "stardict" target */,
+			);
+			path = deps;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -121,6 +134,7 @@
 		692F0ED62F85F91B0037745D = {
 			isa = PBXGroup;
 			children = (
+				692F1DC22F91F5D10037745D /* deps */,
 				692F12B02F892DA70037745D /* tests */,
 				692F0EE62F85F9270037745D /* src */,
 				692F11F32F8779730037745D /* Frameworks */,
@@ -142,6 +156,13 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		692F1DC32F91F5D10037745D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -168,6 +189,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				692F1DC22F91F5D10037745D /* deps */,
 			);
 			name = stardict;
 			packageProductDependencies = (
@@ -228,6 +252,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 692F0EE02F85F91B0037745D /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 692F1DC32F91F5D10037745D /* Products */;
+					ProjectRef = 692F1DBF2F91F5D10037745D /* dictzip.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				692F0EDE2F85F91B0037745D /* stardict */,
