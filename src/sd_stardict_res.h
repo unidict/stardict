@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "sd_dictzip.h"
+#include "dictzip.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +53,7 @@ typedef struct sd_stardict_res_store {
 
     // Database file handle
     FILE *rdic_file;              // res.rdic file handle (regular file)
-    sd_dictzip *dz;                // res.rdic.dz compressed file handler
+    dictzip *dz;                // res.rdic.dz compressed file handler
 
     // Internal state
     bool loaded;

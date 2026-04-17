@@ -23,9 +23,10 @@ target_include_directories(stardict_tests
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/unity
         ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/deps/dictzip/src
 )
 
-target_link_libraries(stardict_tests PRIVATE stardict ZLIB::ZLIB)
+target_link_libraries(stardict_tests PRIVATE stardict dictzip ZLIB::ZLIB)
 
 # Enable testing
 add_test(NAME UnityTestSuite COMMAND stardict_tests)

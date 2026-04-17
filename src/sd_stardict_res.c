@@ -465,7 +465,7 @@ static int load_resource_database(sd_stardict_res *store,
     char *rdic_dz_path = build_path(dirname, "res.rdic.dz");
     if (file_exists(rdic_dz_path)) {
         // Use .rdic.dz
-        store->dz = sd_dictzip_open(rdic_dz_path);
+        store->dz = dictzip_open(rdic_dz_path);
         if (!store->dz) {
             fprintf(stderr, "Error: Cannot open res.rdic.dz: %s\n", rdic_dz_path);
             free(rdic_dz_path);
@@ -577,7 +577,7 @@ void sd_stardict_res_store_free(sd_stardict_res *store) {
     }
 
     if (store->dz) {
-        sd_dictzip_close(store->dz);
+        dictzip_close(store->dz);
     }
 
     // Free file mode resources
@@ -634,7 +634,7 @@ int sd_stardict_res_store_read_file(const sd_stardict_res *store,
     if (store->dz) {
         // Read from .rdic.dz compressed file (supports random access)
         uint32_t out_size;
-        unsigned char *data = sd_dictzip_read(store->dz, entry->offset, entry->size, &out_size);
+        unsigned char *data = dictzip_read(store->dz, entry->offset, entry->size, &out_size);
         if (!data) {
             fprintf(stderr, "Error: Failed to read from res.rdic.dz: %s\n", filename);
             return -1;

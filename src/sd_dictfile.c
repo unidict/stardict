@@ -52,7 +52,7 @@ sd_dictfile *sd_dictfile_open(const char *filepath, const char *sametypesequence
         dict->is_compressed = true;
 
         // Open dictzip compressed file
-        dict->dz = sd_dictzip_open(filepath);
+        dict->dz = dictzip_open(filepath);
         if (!dict->dz) {
             fprintf(stderr, "Error: Failed to open .dict.dz file\n");
             sd_dictfile_close(dict);
@@ -92,7 +92,7 @@ void sd_dictfile_close(sd_dictfile *df) {
 
     // Free compressed file resources
     if (df->dz) {
-        sd_dictzip_close(df->dz);
+        dictzip_close(df->dz);
         df->dz = NULL;
     }
 
@@ -123,7 +123,7 @@ sd_dictfile_data_block *sd_dictfile_read(sd_dictfile *df,
         // Note: out_size may be less than size if offset+size exceeds
         // the uncompressed file size (dictzip clamps internally)
         uint32_t out_size;
-        unsigned char *data = sd_dictzip_read(df->dz, offset, size, &out_size);
+        unsigned char *data = dictzip_read(df->dz, offset, size, &out_size);
         if (!data) {
             fprintf(stderr, "Error: Failed to read decompressed data\n");
             return NULL;

@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "sd_dictzip.h"
+#include "dictzip.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +36,7 @@ typedef struct {
     char *filepath;          // .dict or .dict.dz file path
     bool is_compressed;       // Whether it is a .dict.dz compressed file
     FILE *fp;          // Regular file handle
-    sd_dictzip *dz;            // .dict.dz compressed file handler (for compressed files only)
+    dictzip *dz;            // .dict.dz compressed file handler (for compressed files only)
 
     // Last read block (reused across calls)
     sd_dictfile_data_block last_block;
