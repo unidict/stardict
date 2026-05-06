@@ -319,8 +319,8 @@ sd_suggestion_result *stardict_suggest(sd_stardict *stardict, const char *prefix
     }
 
     suggestions->count = count;
-    suggestions->suggestions = calloc(count, sizeof(sd_dictfile_index_entry *));
-    if (!suggestions->suggestions) {
+    suggestions->entries = calloc(count, sizeof(sd_dictfile_index_entry *));
+    if (!suggestions->entries) {
         free(suggestions);
         sd_dictfile_index_free_entries(entries);
         return NULL;
@@ -334,7 +334,7 @@ sd_suggestion_result *stardict_suggest(sd_stardict *stardict, const char *prefix
             info->offset = entries[i].offset;
             info->size = entries[i].size;
 
-            suggestions->suggestions[i] = info;
+            suggestions->entries[i] = info;
 
             // Clear original entry's word (prevent double free)
             entries[i].word = NULL;

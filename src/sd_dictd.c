@@ -210,8 +210,8 @@ sd_suggestion_result *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size
     }
 
     suggestions->count = count;
-    suggestions->suggestions = calloc(count, sizeof(sd_dictfile_index_entry *));
-    if (!suggestions->suggestions) {
+    suggestions->entries = calloc(count, sizeof(sd_dictfile_index_entry *));
+    if (!suggestions->entries) {
         free(suggestions);
         sd_dictfile_index_free_entries(entries);
         return NULL;
@@ -225,7 +225,7 @@ sd_suggestion_result *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size
             info->offset = entries[i].offset;
             info->size = entries[i].size;
 
-            suggestions->suggestions[i] = info;
+            suggestions->entries[i] = info;
 
             // Clear original entry's word (prevent double free)
             entries[i].word = NULL;

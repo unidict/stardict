@@ -275,11 +275,11 @@ void test_stardict_suggest_h_prefix(void) {
     sd_suggestion_result *result = stardict_suggest(dict, "h", 5);
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_size_t(5, result->count);
-    TEST_ASSERT_EQUAL_STRING("H", result->suggestions[0]->word);
-    TEST_ASSERT_EQUAL_STRING("h", result->suggestions[1]->word);
-    TEST_ASSERT_EQUAL_STRING("H-bomb", result->suggestions[2]->word);
-    TEST_ASSERT_EQUAL_STRING("H.C.F.", result->suggestions[3]->word);
-    TEST_ASSERT_EQUAL_STRING("h.p.", result->suggestions[4]->word);
+    TEST_ASSERT_EQUAL_STRING("H", result->entries[0]->word);
+    TEST_ASSERT_EQUAL_STRING("h", result->entries[1]->word);
+    TEST_ASSERT_EQUAL_STRING("H-bomb", result->entries[2]->word);
+    TEST_ASSERT_EQUAL_STRING("H.C.F.", result->entries[3]->word);
+    TEST_ASSERT_EQUAL_STRING("h.p.", result->entries[4]->word);
 
     sd_suggestion_result_free(result);
     sd_stardict_close(dict);
@@ -309,7 +309,7 @@ void test_stardict_lookup_by_index(void) {
     TEST_ASSERT_EQUAL_size_t(1, sg->count);
 
     // Then use lookup_by_index for fast definition retrieval
-    char *def = stardict_lookup_by_index(dict, sg->suggestions[0]);
+    char *def = stardict_lookup_by_index(dict, sg->entries[0]);
     TEST_ASSERT_NOT_NULL(def);
     TEST_ASSERT_NOT_NULL(strstr(def, "Hello"));
     free(def);

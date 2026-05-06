@@ -21,7 +21,7 @@ typedef struct sd_dictfile_index_entry sd_dictfile_index_entry;
 
 typedef struct {
     size_t count;                                // Suggestion count
-    struct sd_dictfile_index_entry **suggestions; // Suggestion array
+    struct sd_dictfile_index_entry **entries; // Suggestion array
 } sd_suggestion_result;
 
 typedef struct {

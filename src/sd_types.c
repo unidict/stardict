@@ -12,14 +12,14 @@
 void sd_suggestion_result_free(sd_suggestion_result *result) {
     if (!result) return;
 
-    if (result->suggestions) {
+    if (result->entries) {
         for (size_t i = 0; i < result->count; i++) {
-            if (result->suggestions[i]) {
-                free(result->suggestions[i]->word);
-                free(result->suggestions[i]);  // sd_dictfile_index_entry is malloc allocated
+            if (result->entries[i]) {
+                free(result->entries[i]->word);
+                free(result->entries[i]);  // sd_dictfile_index_entry is malloc allocated
             }
         }
-        free(result->suggestions);
+        free(result->entries);
     }
     free(result);
 }
