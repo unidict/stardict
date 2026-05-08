@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C](https://img.shields.io/badge/C-11-blue.svg)](https://en.wikipedia.org/wiki/C11_(C_standard))
-[![CI](https://github.com/kejinlu/stardict/actions/workflows/ci.yml/badge.svg)](https://github.com/kejinlu/stardict/actions/workflows/ci.yml)
+[![CI](https://github.com/unidict/stardict/actions/workflows/ci.yml/badge.svg)](https://github.com/unidict/stardict/actions/workflows/ci.yml)
 
 **stardict** — A C library for parsing **StarDict** and **dictd** dictionary files, with support for lookup, prefix search, synonym expansion, and random-access compressed data reading.
 
@@ -52,7 +52,7 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 ### Build from Source
 
 ```bash
-git clone https://github.com/kejinlu/stardict.git
+git clone https://github.com/unidict/stardict.git
 cd stardict
 
 mkdir build && cd build
