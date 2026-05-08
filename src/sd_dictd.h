@@ -85,6 +85,13 @@ char *sd_dictd_lookup_by_index(sd_dictd *dictd, const sd_dictfile_index_entry *e
  */
 const sd_dictfile_index *sd_dictd_get_index(sd_dictd *dictd);
 
+typedef struct {
+    const char *index_path;
+    const char *dict_path;
+} sd_dictd_paths;
+
+const sd_dictd_paths *sd_dictd_get_paths(sd_dictd *dictd);
+
 #ifdef __cplusplus
 }
 #endif

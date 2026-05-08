@@ -1,4 +1,4 @@
-*.xcuserstate
+xcuserdata/
 .claude/
 .DS_Store
 
@@ -6,6 +6,3 @@
 build/
 cmake-build-*/
 CMakeUserPresets.json
-
-# Xcode
-xcuserdata/
