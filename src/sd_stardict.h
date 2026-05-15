@@ -96,13 +96,13 @@ char *stardict_lookup_by_index(sd_stardict *stardict, const sd_dictfile_index_en
 const sd_dictfile_index *stardict_get_index(sd_stardict *stardict);
 
 typedef struct {
-    const char *ifo_path;
-    const char *idx_path;
-    const char *dict_path;
-    const char *syn_path;
+    const char *ifo_path;  /**< Valid while sd_stardict is alive */
+    const char *idx_path;  /**< Valid while sd_stardict is alive */
+    const char *dict_path; /**< Valid while sd_stardict is alive */
+    const char *syn_path;  /**< Valid while sd_stardict is alive, may be NULL */
 } sd_stardict_paths;
 
-const sd_stardict_paths *sd_stardict_get_paths(sd_stardict *stardict);
+sd_stardict_paths sd_stardict_get_paths(sd_stardict *stardict);
 
 #ifdef __cplusplus
 }

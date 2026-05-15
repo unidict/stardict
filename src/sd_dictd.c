@@ -271,12 +271,12 @@ const sd_dictfile_index *sd_dictd_get_index(sd_dictd *dictd) {
     return dictd->index;
 }
 
-const sd_dictd_paths *sd_dictd_get_paths(sd_dictd *dictd) {
-    if (!dictd) return NULL;
-    static sd_dictd_paths paths;
+sd_dictd_paths sd_dictd_get_paths(sd_dictd *dictd) {
+    sd_dictd_paths paths = {0};
+    if (!dictd) return paths;
     paths.index_path = dictd->index_path;
     paths.dict_path = dictd->dict_path;
-    return &paths;
+    return paths;
 }
 
 // ============================================================

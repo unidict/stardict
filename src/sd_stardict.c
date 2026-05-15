@@ -380,14 +380,14 @@ const sd_dictfile_index *stardict_get_index(sd_stardict *stardict) {
     return stardict->idx;
 }
 
-const sd_stardict_paths *sd_stardict_get_paths(sd_stardict *stardict) {
-    if (!stardict) return NULL;
-    static sd_stardict_paths paths;
+sd_stardict_paths sd_stardict_get_paths(sd_stardict *stardict) {
+    sd_stardict_paths paths = {0};
+    if (!stardict) return paths;
     paths.ifo_path = stardict->ifo_path;
     paths.idx_path = stardict->idx_path;
     paths.dict_path = stardict->dict_path;
     paths.syn_path = stardict->syn_path;
-    return &paths;
+    return paths;
 }
 
 // ============================================================
