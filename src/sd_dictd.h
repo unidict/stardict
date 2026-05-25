@@ -57,7 +57,6 @@ void sd_dictd_close(sd_dictd *dictd);
  * @param dictd dictionary object
  * @param key Search keyword
  * @return Result list on success (needs sd_lookup_result_free), NULL on failure or not found
- * @note definitions[i] may be NULL if data read fails for that entry
  */
 sd_lookup_result *sd_dictd_lookup(sd_dictd *dictd, const char *key);
 

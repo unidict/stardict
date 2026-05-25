@@ -25,8 +25,13 @@ typedef struct {
 } sd_suggestion_result;
 
 typedef struct {
-    size_t count;        // Definition count
-    char **definitions;  // Definition string array
+    char *word;        // Original headword from index entry
+    char *definition;  // Definition text
+} sd_lookup_entry;
+
+typedef struct {
+    size_t count;
+    sd_lookup_entry *entries;  // Result array (word + definition pairs)
 } sd_lookup_result;
 
 void sd_suggestion_result_free(sd_suggestion_result *result);

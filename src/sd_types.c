@@ -27,11 +27,12 @@ void sd_suggestion_result_free(sd_suggestion_result *result) {
 void sd_lookup_result_free(sd_lookup_result *result) {
     if (!result) return;
 
-    if (result->definitions) {
+    if (result->entries) {
         for (size_t i = 0; i < result->count; i++) {
-            free(result->definitions[i]);
+            free(result->entries[i].word);
+            free(result->entries[i].definition);
         }
-        free(result->definitions);
+        free(result->entries);
     }
     free(result);
 }

@@ -234,8 +234,10 @@ void test_stardict_lookup_hello(void) {
     sd_lookup_result *result = stardict_lookup(dict, "hello");
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_size_t(1, result->count);
-    TEST_ASSERT_NOT_NULL(result->definitions[0]);
-    TEST_ASSERT_NOT_NULL(strstr(result->definitions[0], "Hello"));
+    TEST_ASSERT_NOT_NULL(result->entries[0].word);
+    TEST_ASSERT_EQUAL_STRING("hello", result->entries[0].word);
+    TEST_ASSERT_NOT_NULL(result->entries[0].definition);
+    TEST_ASSERT_NOT_NULL(strstr(result->entries[0].definition, "Hello"));
 
     sd_lookup_result_free(result);
     sd_stardict_close(dict);
@@ -258,7 +260,7 @@ void test_stardict_lookup_a(void) {
     sd_lookup_result *result = stardict_lookup(dict, "a");
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_TRUE(result->count >= 1);
-    TEST_ASSERT_NOT_NULL(result->definitions[0]);
+    TEST_ASSERT_NOT_NULL(result->entries[0].definition);
 
     sd_lookup_result_free(result);
     sd_stardict_close(dict);

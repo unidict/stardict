@@ -257,16 +257,16 @@ sd_lookup_result *stardict_lookup(sd_stardict *stardict, const char *key) {
     }
 
     // 3. Build result array
+    size_t all_count = sd_array_size(all_entries);
     sd_lookup_result *results = malloc(sizeof(sd_lookup_result));
     if (!results) {
         sd_dictfile_index_free_entries(all_entries);
         return NULL;
     }
 
-    size_t all_count = sd_array_size(all_entries);
     results->count = all_count;
-    results->definitions = calloc(all_count, sizeof(char *));
-    if (!results->definitions) {
+    results->entries = calloc(all_count, sizeof(sd_lookup_entry));
+    if (!results->entries) {
         free(results);
         sd_dictfile_index_free_entries(all_entries);
         return NULL;
@@ -274,19 +274,17 @@ sd_lookup_result *stardict_lookup(sd_stardict *stardict, const char *key) {
 
     // Read data for each match
     for (size_t i = 0; i < all_count; i++) {
-        uint32_t offset = all_entries[i].offset;
-        uint32_t size = all_entries[i].size;
+        results->entries[i].word = all_entries[i].word;
+        all_entries[i].word = NULL;  // Transfer ownership
 
         sd_dictfile_data_block *block = sd_dictfile_read(stardict->dict,
-                                                               offset, size);
-        if (!block) {
-            results->definitions[i] = NULL;
-            continue;
+                                                               all_entries[i].offset,
+                                                               all_entries[i].size);
+        if (block) {
+            sd_dictfile_data_to_string(stardict->dict,
+                                            block->data, block->size,
+                                            &results->entries[i].definition);
         }
-
-        sd_dictfile_data_to_string(stardict->dict,
-                                        block->data, block->size,
-                                        &results->definitions[i]);
     }
 
     sd_dictfile_index_free_entries(all_entries);

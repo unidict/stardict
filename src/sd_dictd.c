@@ -158,8 +158,8 @@ sd_lookup_result *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
     }
 
     results->count = count;
-    results->definitions = calloc(count, sizeof(char *));
-    if (!results->definitions) {
+    results->entries = calloc(count, sizeof(sd_lookup_entry));
+    if (!results->entries) {
         free(results);
         sd_dictfile_index_free_entries(entries);
         return NULL;
@@ -167,16 +167,16 @@ sd_lookup_result *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
 
     // Read data for each match
     for (size_t i = 0; i < count; i++) {
+        results->entries[i].word = entries[i].word;
+        entries[i].word = NULL;  // Transfer ownership
+
         sd_dictfile_data_block *block = sd_dictfile_read(dictd->dict,
                                            entries[i].offset,
                                            entries[i].size);
-        if (!block) {
-            results->definitions[i] = NULL;
-            continue;
+        if (block) {
+            // dictd data is usually plain text
+            results->entries[i].definition = strndup(block->data, block->size);
         }
-
-        // dictd data is usually plain text
-        results->definitions[i] = strndup(block->data, block->size);
     }
 
     sd_dictfile_index_free_entries(entries);
