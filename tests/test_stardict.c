@@ -45,27 +45,37 @@ static const char *get_test_ifo_path(void) {
 // ============================================================
 
 void test_stardict_open_null(void) {
-    sd_stardict *dict = sd_stardict_open(NULL);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(NULL, &dict);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(dict);
 }
 
 void test_stardict_open_nonexistent(void) {
-    sd_stardict *dict = sd_stardict_open("/tmp/nonexistent_stardict_file_12345.ifo");
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open("/tmp/nonexistent_stardict_file_12345.ifo", &dict);
+    TEST_ASSERT_TRUE(st != SD_OK);
     TEST_ASSERT_NULL(dict);
 }
 
 void test_stardict_open_from_paths_null_ifo(void) {
-    sd_stardict *dict = sd_stardict_open_from_paths(NULL, "/tmp/a.idx", "/tmp/a.dict", NULL);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open_from_paths(NULL, "/tmp/a.idx", "/tmp/a.dict", NULL, &dict);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(dict);
 }
 
 void test_stardict_open_from_paths_null_idx(void) {
-    sd_stardict *dict = sd_stardict_open_from_paths("/tmp/a.ifo", NULL, "/tmp/a.dict", NULL);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open_from_paths("/tmp/a.ifo", NULL, "/tmp/a.dict", NULL, &dict);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(dict);
 }
 
 void test_stardict_open_from_paths_null_dict(void) {
-    sd_stardict *dict = sd_stardict_open_from_paths("/tmp/a.ifo", "/tmp/a.idx", NULL, NULL);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open_from_paths("/tmp/a.ifo", "/tmp/a.idx", NULL, NULL, &dict);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(dict);
 }
 
@@ -83,34 +93,46 @@ void test_stardict_get_info_null(void) {
 }
 
 void test_stardict_lookup_null_dict(void) {
-    sd_data_entry_array *result = stardict_lookup(NULL, "hello");
+    sd_data_entry_array *result = NULL;
+    sd_status st = stardict_lookup(NULL, "hello", &result);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(result);
 }
 
 void test_stardict_lookup_null_key(void) {
-    sd_data_entry_array *result = stardict_lookup(NULL, NULL);
+    sd_data_entry_array *result = NULL;
+    sd_status st = stardict_lookup(NULL, NULL, &result);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(result);
 }
 
 void test_stardict_suggest_null_dict(void) {
-    sd_index_entry_array *result = stardict_suggest(NULL, "hel", 10);
+    sd_index_entry_array *result = NULL;
+    sd_status st = stardict_suggest(NULL, "hel", 10, &result);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(result);
 }
 
 void test_stardict_suggest_null_prefix(void) {
-    sd_index_entry_array *result = stardict_suggest(NULL, NULL, 10);
+    sd_index_entry_array *result = NULL;
+    sd_status st = stardict_suggest(NULL, NULL, 10, &result);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(result);
 }
 
-void test_stardict_lookup_by_index_null_dict(void) {
+void test_stardict_fetch_null_dict(void) {
     sd_dictfile_index_entry entry;
     memset(&entry, 0, sizeof(entry));
-    char *result = stardict_lookup_by_index(NULL, &entry);
+    char *result = NULL;
+    sd_status st = stardict_fetch(NULL, &entry, &result);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(result);
 }
 
-void test_stardict_lookup_by_index_null_entry(void) {
-    char *result = stardict_lookup_by_index(NULL, NULL);
+void test_stardict_fetch_null_entry(void) {
+    char *result = NULL;
+    sd_status st = stardict_fetch(NULL, NULL, &result);
+    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(result);
 }
 
@@ -136,7 +158,9 @@ void test_suggestion_result_free_null(void) {
 // ============================================================
 
 void test_stardict_open_valid(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
     sd_stardict_close(dict);
 }
@@ -146,7 +170,9 @@ void test_stardict_open_valid(void) {
 // ============================================================
 
 void test_stardict_get_info_bookname(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     const sd_stardict_ifo *ifo = stardict_get_info(dict);
@@ -158,7 +184,9 @@ void test_stardict_get_info_bookname(void) {
 }
 
 void test_stardict_get_info_wordcount(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     const sd_stardict_ifo *ifo = stardict_get_info(dict);
@@ -169,7 +197,9 @@ void test_stardict_get_info_wordcount(void) {
 }
 
 void test_stardict_get_info_author(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     const sd_stardict_ifo *ifo = stardict_get_info(dict);
@@ -181,7 +211,9 @@ void test_stardict_get_info_author(void) {
 }
 
 void test_stardict_get_info_sametypesequence(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     const sd_stardict_ifo *ifo = stardict_get_info(dict);
@@ -197,7 +229,9 @@ void test_stardict_get_info_sametypesequence(void) {
 // ============================================================
 
 void test_stardict_get_index_count(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     const sd_dictfile_index *idx = stardict_get_index(dict);
@@ -208,7 +242,9 @@ void test_stardict_get_index_count(void) {
 }
 
 void test_stardict_get_index_first_entry(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     const sd_dictfile_index *idx = stardict_get_index(dict);
@@ -228,10 +264,14 @@ void test_stardict_get_index_first_entry(void) {
 // ============================================================
 
 void test_stardict_lookup_hello(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_data_entry_array *result = stardict_lookup(dict, "hello");
+    sd_data_entry_array *result = NULL;
+    st = stardict_lookup(dict, "hello", &result);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_size_t(1, result->count);
     TEST_ASSERT_NOT_NULL(result->items[0].word);
@@ -244,20 +284,28 @@ void test_stardict_lookup_hello(void) {
 }
 
 void test_stardict_lookup_not_found(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_data_entry_array *result = stardict_lookup(dict, "xyznonexistent12345");
+    sd_data_entry_array *result = NULL;
+    st = stardict_lookup(dict, "xyznonexistent12345", &result);
+    TEST_ASSERT_EQUAL(SD_NOT_FOUND, st);
     TEST_ASSERT_NULL(result);
 
     sd_stardict_close(dict);
 }
 
 void test_stardict_lookup_a(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_data_entry_array *result = stardict_lookup(dict, "a");
+    sd_data_entry_array *result = NULL;
+    st = stardict_lookup(dict, "a", &result);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_TRUE(result->count >= 1);
     TEST_ASSERT_NOT_NULL(result->items[0].definition);
@@ -271,10 +319,14 @@ void test_stardict_lookup_a(void) {
 // ============================================================
 
 void test_stardict_suggest_h_prefix(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_index_entry_array *result = stardict_suggest(dict, "h", 5);
+    sd_index_entry_array *result = NULL;
+    st = stardict_suggest(dict, "h", 5, &result);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_size_t(5, result->count);
     TEST_ASSERT_EQUAL_STRING("H", result->items[0]->word);
@@ -288,30 +340,40 @@ void test_stardict_suggest_h_prefix(void) {
 }
 
 void test_stardict_suggest_not_found(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_index_entry_array *result = stardict_suggest(dict, "zzzzzzz", 10);
+    sd_index_entry_array *result = NULL;
+    st = stardict_suggest(dict, "zzzzzzz", 10, &result);
+    TEST_ASSERT_EQUAL(SD_NOT_FOUND, st);
     TEST_ASSERT_NULL(result);
 
     sd_stardict_close(dict);
 }
 
 // ============================================================
-// Tests: lookup by index
+// Tests: fetch (lookup by index)
 // ============================================================
 
-void test_stardict_lookup_by_index(void) {
-    sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
+void test_stardict_fetch(void) {
+    sd_stardict *dict = NULL;
+    sd_status st = sd_stardict_open(TEST_IFO_PATH, &dict);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(dict);
 
     // First get an entry via suggest
-    sd_index_entry_array *sg = stardict_suggest(dict, "hello", 1);
+    sd_index_entry_array *sg = NULL;
+    st = stardict_suggest(dict, "hello", 1, &sg);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(sg);
     TEST_ASSERT_EQUAL_size_t(1, sg->count);
 
-    // Then use lookup_by_index for fast definition retrieval
-    char *def = stardict_lookup_by_index(dict, sg->items[0]);
+    // Then use fetch for fast definition retrieval
+    char *def = NULL;
+    st = stardict_fetch(dict, sg->items[0], &def);
+    TEST_ASSERT_EQUAL(SD_OK, st);
     TEST_ASSERT_NOT_NULL(def);
     TEST_ASSERT_NOT_NULL(strstr(def, "Hello"));
     free(def);
@@ -339,8 +401,8 @@ void run_stardict_tests(void) {
     RUN_TEST(test_stardict_lookup_null_key);
     RUN_TEST(test_stardict_suggest_null_dict);
     RUN_TEST(test_stardict_suggest_null_prefix);
-    RUN_TEST(test_stardict_lookup_by_index_null_dict);
-    RUN_TEST(test_stardict_lookup_by_index_null_entry);
+    RUN_TEST(test_stardict_fetch_null_dict);
+    RUN_TEST(test_stardict_fetch_null_entry);
     RUN_TEST(test_stardict_get_index_null);
     RUN_TEST(test_lookup_result_free_null);
     RUN_TEST(test_suggestion_result_free_null);
@@ -358,7 +420,7 @@ void run_stardict_tests(void) {
     RUN_TEST(test_stardict_lookup_a);
     RUN_TEST(test_stardict_suggest_h_prefix);
     RUN_TEST(test_stardict_suggest_not_found);
-    RUN_TEST(test_stardict_lookup_by_index);
+    RUN_TEST(test_stardict_fetch);
 
     UnityEnd();
 }

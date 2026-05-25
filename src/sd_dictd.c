@@ -136,23 +136,24 @@ static void sd_dictd_cleanup(sd_dictd *dictd) {
 /**
  * Look up index entries by exact key
  */
-sd_index_entry_array *sd_dictd_entry_lookup(sd_dictd *dictd, const char *key) {
-    if (!dictd || !key) {
-        return NULL;
+sd_status sd_dictd_entry_lookup(sd_dictd *dictd, const char *key, sd_index_entry_array **out_index_entries) {
+    if (!dictd || !key || !out_index_entries) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_index_entries = NULL;
 
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(dictd->index, key,
                                                      false, 0);
 
     if (!entries || sd_array_size(entries) == 0) {
-        return NULL;
+        return SD_NOT_FOUND;
     }
 
     size_t count = sd_array_size(entries);
     sd_index_entry_array *results = malloc(sizeof(sd_index_entry_array));
     if (!results) {
         sd_dictfile_index_free_entries(entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     results->count = count;
@@ -160,7 +161,7 @@ sd_index_entry_array *sd_dictd_entry_lookup(sd_dictd *dictd, const char *key) {
     if (!results->items) {
         free(results);
         sd_dictfile_index_free_entries(entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < count; i++) {
@@ -175,26 +176,29 @@ sd_index_entry_array *sd_dictd_entry_lookup(sd_dictd *dictd, const char *key) {
     }
 
     sd_dictfile_index_free_entries(entries);
-    return results;
+    *out_index_entries = results;
+    return SD_OK;
 }
 
 /**
  * Look up all matching entries
  */
-sd_data_entry_array *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
-    if (!dictd || !key) {
-        return NULL;
+sd_status sd_dictd_lookup(sd_dictd *dictd, const char *key, sd_data_entry_array **out_data_entries) {
+    if (!dictd || !key || !out_data_entries) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_data_entries = NULL;
 
-    sd_index_entry_array *index_results = sd_dictd_entry_lookup(dictd, key);
-    if (!index_results) {
-        return NULL;
+    sd_index_entry_array *index_results = NULL;
+    sd_status st = sd_dictd_entry_lookup(dictd, key, &index_results);
+    if (st != SD_OK) {
+        return st;
     }
 
     sd_data_entry_array *results = malloc(sizeof(sd_data_entry_array));
     if (!results) {
         sd_index_entry_array_free(index_results);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     results->count = index_results->count;
@@ -202,7 +206,7 @@ sd_data_entry_array *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
     if (!results->items) {
         free(results);
         sd_index_entry_array_free(index_results);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < index_results->count; i++) {
@@ -219,33 +223,33 @@ sd_data_entry_array *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
     }
 
     sd_index_entry_array_free(index_results);
-    return results;
+    *out_data_entries = results;
+    return SD_OK;
 }
 
 /**
  * Get word suggestions by prefix
  */
-sd_index_entry_array *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results) {
-    if (!dictd || !prefix) {
-        return NULL;
+sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries) {
+    if (!dictd || !prefix || !out_index_entries) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_index_entries = NULL;
 
-    // Prefix match (returns cvector)
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(dictd->index, prefix,
                                                      true,
                                                      (uint32_t)max_results);
 
     if (!entries || sd_array_size(entries) == 0) {
-        return NULL;  // Not found
+        return SD_NOT_FOUND;
     }
 
     size_t count = sd_array_size(entries);
 
-    // Build suggestion list
     sd_index_entry_array *suggestions = malloc(sizeof(sd_index_entry_array));
     if (!suggestions) {
         sd_dictfile_index_free_entries(entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     suggestions->count = count;
@@ -253,11 +257,10 @@ sd_index_entry_array *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size
     if (!suggestions->items) {
         free(suggestions);
         sd_dictfile_index_free_entries(entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < count; i++) {
-        // Create word_info (store offset/size for fast subsequent lookup)
         sd_dictfile_index_entry *info = calloc(1, sizeof(sd_dictfile_index_entry));
         if (info) {
             info->word = entries[i].word;  // Transfer ownership
@@ -266,41 +269,39 @@ sd_index_entry_array *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size
 
             suggestions->items[i] = info;
 
-            // Clear original entry's word (prevent double free)
-            entries[i].word = NULL;
+            entries[i].word = NULL;  // Prevent double free
         }
     }
 
-    // Free entries structure (word transferred to word_info)
     sd_dictfile_index_free_entries(entries);
 
-    return suggestions;
+    *out_index_entries = suggestions;
+    return SD_OK;
 }
 
 /**
- * Fast lookup definition using index entry
+ * Fetch word definition using index entry
  */
-char *sd_dictd_lookup_by_index(sd_dictd *dictd, const sd_dictfile_index_entry *entry) {
-    if (!dictd || !entry) {
-        return NULL;
+sd_status sd_dictd_fetch(sd_dictd *dictd, const sd_dictfile_index_entry *entry, char **out_definition) {
+    if (!dictd || !entry || !out_definition) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_definition = NULL;
 
-    // Read data directly using offset and size from entry
     sd_dictfile_data_block *block = sd_dictfile_read(dictd->dict,
                                        entry->offset,
                                        entry->size);
     if (!block) {
-        return NULL;
+        return SD_NOT_FOUND;
     }
 
-    // Return data directly
     char *result = strndup(block->data, block->size);
-
     if (!result) {
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
-    return result;
+    *out_definition = result;
+    return SD_OK;
 }
 
 const sd_dictfile_index *sd_dictd_get_index(sd_dictd *dictd) {
@@ -325,30 +326,28 @@ sd_dictd_paths sd_dictd_get_paths(sd_dictd *dictd) {
 /**
  * Open dictd dictionary file (specify all file paths)
  */
-sd_dictd *sd_dictd_open_from_paths(const char *index_path,
-                                  const char *dict_path) {
-    if (!index_path || !dict_path) {
-        fprintf(stderr, "Error: Invalid parameters for sd_dictd_open_from_paths\n");
-        return NULL;
+sd_status sd_dictd_open_from_paths(const char *index_path,
+                                   const char *dict_path,
+                                   sd_dictd **out_dict) {
+    if (!index_path || !dict_path || !out_dict) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_dict = NULL;
 
     // Verify files exist
     SD_STAT_STRUCT st;
     if (sd_stat(index_path, &st) != 0 || !SD_ISREG(st.st_mode)) {
-        fprintf(stderr, "Error: .index file not found: %s\n", index_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     if (sd_stat(dict_path, &st) != 0 || !SD_ISREG(st.st_mode)) {
-        fprintf(stderr, "Error: .dict file not found: %s\n", dict_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     // Allocate sd_dictd object
     sd_dictd *dictd = calloc(1, sizeof(sd_dictd));
     if (!dictd) {
-        fprintf(stderr, "Error: Memory allocation failed for sd_dictd\n");
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     // Copy paths
@@ -356,41 +355,39 @@ sd_dictd *sd_dictd_open_from_paths(const char *index_path,
     dictd->dict_path = strdup(dict_path);
 
     if (!dictd->index_path || !dictd->dict_path) {
-        fprintf(stderr, "Error: Memory allocation failed for file paths\n");
         sd_dictd_cleanup(dictd);
         free(dictd);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     // Load .index index file
     dictd->index = sd_dictfile_index_open(index_path, dictd_parse_entry, 0, 0);
     if (!dictd->index) {
-        fprintf(stderr, "Error: Failed to load .index file\n");
         sd_dictd_cleanup(dictd);
         free(dictd);
-        return NULL;
+        return SD_ERR_FORMAT;
     }
 
     // Open .dict data file
     dictd->dict = sd_dictfile_open(dict_path, NULL);
     if (!dictd->dict) {
-        fprintf(stderr, "Error: Failed to open .dict file\n");
         sd_dictd_cleanup(dictd);
         free(dictd);
-        return NULL;
+        return SD_ERR_IO;
     }
 
-    return dictd;
+    *out_dict = dictd;
+    return SD_OK;
 }
 
 /**
  * Open dictd dictionary file (auto-discover related files)
  */
-sd_dictd *sd_dictd_open(const char *index_path) {
-    if (!index_path) {
-        fprintf(stderr, "Error: index_path is NULL\n");
-        return NULL;
+sd_status sd_dictd_open(const char *index_path, sd_dictd **out_dict) {
+    if (!index_path || !out_dict) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_dict = NULL;
 
     // Construct .dict file path from base name (before last '.')
     const char *dot = strrchr(index_path, '.');
@@ -400,10 +397,9 @@ sd_dictd *sd_dictd_open(const char *index_path) {
     char *dict_dz_path = malloc(base_len + 9);  // base + ".dict.dz" + null
 
     if (!dict_path || !dict_dz_path) {
-        fprintf(stderr, "Error: Memory allocation failed for file paths\n");
         free(dict_path);
         free(dict_dz_path);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     memcpy(dict_path, index_path, base_len);
@@ -420,19 +416,18 @@ sd_dictd *sd_dictd_open(const char *index_path) {
     } else if (sd_stat(dict_dz_path, &st) == 0 && SD_ISREG(st.st_mode)) {
         actual_dict_path = dict_dz_path;
     } else {
-        fprintf(stderr, "Error: Neither .dict nor .dict.dz file found\n");
         free(dict_path);
         free(dict_dz_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     // Call full-path version
-    sd_dictd *result = sd_dictd_open_from_paths(index_path, actual_dict_path);
+    sd_status status = sd_dictd_open_from_paths(index_path, actual_dict_path, out_dict);
 
     free(dict_path);
     free(dict_dz_path);
 
-    return result;
+    return status;
 }
 
 // ============================================================

@@ -9,6 +9,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char *sd_strerror(sd_status status) {
+    switch (status) {
+        case SD_OK:                return "success";
+        case SD_NOT_FOUND:         return "not found";
+        case SD_DONE:              return "iteration complete";
+        case SD_ERR_INVALID_PARAM: return "invalid parameter";
+        case SD_ERR_IO:            return "I/O error";
+        case SD_ERR_MEMORY:        return "out of memory";
+        case SD_ERR_FORMAT:        return "format error";
+        case SD_ERR_INTERNAL:      return "internal error";
+        default:                   return "unknown error";
+    }
+}
+
 void sd_index_entry_array_free(sd_index_entry_array *result) {
     if (!result) return;
 

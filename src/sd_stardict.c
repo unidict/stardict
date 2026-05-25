@@ -205,10 +205,11 @@ const sd_stardict_ifo *stardict_get_info(sd_stardict *stardict) {
 /**
  * Look up index entries by exact key (returns index entries without data)
  */
-sd_index_entry_array *stardict_entry_lookup(sd_stardict *stardict, const char *key) {
-    if (!stardict || !key) {
-        return NULL;
+sd_status stardict_entry_lookup(sd_stardict *stardict, const char *key, sd_index_entry_array **out_index_entries) {
+    if (!stardict || !key || !out_index_entries) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_index_entries = NULL;
 
     // Collect all entries (synonyms + direct matches)
     sd_array(sd_dictfile_index_entry) all_entries = NULL;
@@ -248,7 +249,7 @@ sd_index_entry_array *stardict_entry_lookup(sd_stardict *stardict, const char *k
     }
 
     if (!all_entries || sd_array_size(all_entries) == 0) {
-        return NULL;
+        return SD_NOT_FOUND;
     }
 
     // Build index entry array
@@ -256,7 +257,7 @@ sd_index_entry_array *stardict_entry_lookup(sd_stardict *stardict, const char *k
     sd_index_entry_array *results = malloc(sizeof(sd_index_entry_array));
     if (!results) {
         sd_dictfile_index_free_entries(all_entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     results->count = count;
@@ -264,7 +265,7 @@ sd_index_entry_array *stardict_entry_lookup(sd_stardict *stardict, const char *k
     if (!results->items) {
         free(results);
         sd_dictfile_index_free_entries(all_entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < count; i++) {
@@ -279,27 +280,30 @@ sd_index_entry_array *stardict_entry_lookup(sd_stardict *stardict, const char *k
     }
 
     sd_dictfile_index_free_entries(all_entries);
-    return results;
+    *out_index_entries = results;
+    return SD_OK;
 }
 
 /**
  * Look up all matching entries
  */
-sd_data_entry_array *stardict_lookup(sd_stardict *stardict, const char *key) {
-    if (!stardict || !key) {
-        return NULL;
+sd_status stardict_lookup(sd_stardict *stardict, const char *key, sd_data_entry_array **out_data_entries) {
+    if (!stardict || !key || !out_data_entries) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_data_entries = NULL;
 
-    sd_index_entry_array *index_results = stardict_entry_lookup(stardict, key);
-    if (!index_results) {
-        return NULL;
+    sd_index_entry_array *index_results = NULL;
+    sd_status st = stardict_entry_lookup(stardict, key, &index_results);
+    if (st != SD_OK) {
+        return st;
     }
 
     // Build data entry array
     sd_data_entry_array *results = malloc(sizeof(sd_data_entry_array));
     if (!results) {
         sd_index_entry_array_free(index_results);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     results->count = index_results->count;
@@ -307,7 +311,7 @@ sd_data_entry_array *stardict_lookup(sd_stardict *stardict, const char *key) {
     if (!results->items) {
         free(results);
         sd_index_entry_array_free(index_results);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < index_results->count; i++) {
@@ -326,16 +330,18 @@ sd_data_entry_array *stardict_lookup(sd_stardict *stardict, const char *key) {
     }
 
     sd_index_entry_array_free(index_results);
-    return results;
+    *out_data_entries = results;
+    return SD_OK;
 }
 
 /**
  * Get word suggestions by prefix
  */
-sd_index_entry_array *stardict_suggest(sd_stardict *stardict, const char *prefix, size_t max_results) {
-    if (!stardict || !prefix) {
-        return NULL;
+sd_status stardict_suggest(sd_stardict *stardict, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries) {
+    if (!stardict || !prefix || !out_index_entries) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_index_entries = NULL;
 
     // Prefix match
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(
@@ -343,7 +349,7 @@ sd_index_entry_array *stardict_suggest(sd_stardict *stardict, const char *prefix
 
     if (!entries || sd_array_size(entries) == 0) {
         if (entries) sd_dictfile_index_free_entries(entries);
-        return NULL;  // Not found
+        return SD_NOT_FOUND;
     }
 
     // Build suggestion list
@@ -351,7 +357,7 @@ sd_index_entry_array *stardict_suggest(sd_stardict *stardict, const char *prefix
     sd_index_entry_array *suggestions = malloc(sizeof(sd_index_entry_array));
     if (!suggestions) {
         sd_dictfile_index_free_entries(entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     suggestions->count = count;
@@ -359,11 +365,10 @@ sd_index_entry_array *stardict_suggest(sd_stardict *stardict, const char *prefix
     if (!suggestions->items) {
         free(suggestions);
         sd_dictfile_index_free_entries(entries);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < count; i++) {
-        // Create word_info (store offset/size for fast subsequent lookup)
         sd_dictfile_index_entry *info = calloc(1, sizeof(sd_dictfile_index_entry));
         if (info) {
             info->word = entries[i].word;  // Transfer ownership
@@ -372,41 +377,40 @@ sd_index_entry_array *stardict_suggest(sd_stardict *stardict, const char *prefix
 
             suggestions->items[i] = info;
 
-            // Clear original entry's word (prevent double free)
-            entries[i].word = NULL;
+            entries[i].word = NULL;  // Prevent double free
         }
     }
 
-    // Free entries structure (word transferred to word_info)
     sd_dictfile_index_free_entries(entries);
 
-    return suggestions;
+    *out_index_entries = suggestions;
+    return SD_OK;
 }
 
 /**
- * Fast lookup definition using index entry
+ * Fetch word definition using index entry
  */
-char *stardict_lookup_by_index(sd_stardict *stardict, const sd_dictfile_index_entry *entry) {
-    if (!stardict || !entry) {
-        return NULL;
+sd_status stardict_fetch(sd_stardict *stardict, const sd_dictfile_index_entry *entry, char **out_definition) {
+    if (!stardict || !entry || !out_definition) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_definition = NULL;
 
-    // Read data directly using offset and size from entry
     sd_dictfile_data_block *block = sd_dictfile_read(stardict->dict,
                                                            entry->offset,
                                                            entry->size);
     if (!block) {
-        return NULL;
+        return SD_NOT_FOUND;
     }
 
-    // Convert to string
     char *result = NULL;
     if (sd_dictfile_data_to_string(stardict->dict,
                                    block->data, block->size, &result) == 0) {
-        return result;
+        *out_definition = result;
+        return SD_OK;
     }
 
-    return NULL;
+    return SD_ERR_IO;
 }
 
 const sd_dictfile_index *stardict_get_index(sd_stardict *stardict) {
@@ -433,41 +437,37 @@ sd_stardict_paths sd_stardict_get_paths(sd_stardict *stardict) {
 /**
  * Open StarDict dictionary file (specify all file paths)
  */
-sd_stardict *sd_stardict_open_from_paths(const char *ifo_path,
-                                     const char *idx_path,
-                                     const char *dict_path,
-                                     const char *syn_path) {
-    if (!ifo_path || !idx_path || !dict_path) {
-        fprintf(stderr, "Error: Invalid parameters for sd_stardict_open_from_paths\n");
-        return NULL;
+sd_status sd_stardict_open_from_paths(const char *ifo_path,
+                                      const char *idx_path,
+                                      const char *dict_path,
+                                      const char *syn_path,
+                                      sd_stardict **out_dict) {
+    if (!ifo_path || !idx_path || !dict_path || !out_dict) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_dict = NULL;
 
     // Verify files exist
     if (!file_exists(ifo_path)) {
-        fprintf(stderr, "Error: .ifo file not found: %s\n", ifo_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     if (!file_exists(idx_path)) {
-        fprintf(stderr, "Error: .idx file not found: %s\n", idx_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     if (!file_exists(dict_path)) {
-        fprintf(stderr, "Error: .dict file not found: %s\n", dict_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     if (syn_path && !file_exists(syn_path)) {
-        fprintf(stderr, "Warning: .syn file not found: %s (will be ignored)\n", syn_path);
-        syn_path = NULL;
+        syn_path = NULL;  // syn is optional, ignore if not found
     }
 
     // Allocate sd_stardict object
     sd_stardict *stardict = calloc(1, sizeof(sd_stardict));
     if (!stardict) {
-        fprintf(stderr, "Error: Memory allocation failed for sd_stardict\n");
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     // Copy paths
@@ -479,72 +479,64 @@ sd_stardict *sd_stardict_open_from_paths(const char *ifo_path,
     }
 
     if (!stardict->ifo_path || !stardict->idx_path || !stardict->dict_path) {
-        fprintf(stderr, "Error: Memory allocation failed for file paths\n");
         sd_stardict_cleanup(stardict);
         free(stardict);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
-    // // Load .ifo file
+    // Load .ifo file
     stardict->ifo = sd_stardict_ifo_load(ifo_path);
     if (!stardict->ifo) {
-        fprintf(stderr, "Error: Failed to load .ifo file\n");
         sd_stardict_cleanup(stardict);
         free(stardict);
-        return NULL;
+        return SD_ERR_FORMAT;
     }
 
-    // // Load .idx index file
+    // Load .idx index file
     stardict->idx = sd_dictfile_index_open(idx_path, stardict_parse_entry,
                                       stardict->ifo->wordcount,
                                       stardict->ifo->index_file_size);
     if (!stardict->idx) {
-        fprintf(stderr, "Error: Failed to load .idx file\n");
         sd_stardict_cleanup(stardict);
         free(stardict);
-        return NULL;
+        return SD_ERR_FORMAT;
     }
 
     // Open .dict data file
     stardict->dict = sd_dictfile_open(dict_path, stardict->ifo->sametypesequence);
     if (!stardict->dict) {
-        fprintf(stderr, "Error: Failed to open .dict file\n");
         sd_stardict_cleanup(stardict);
         free(stardict);
-        return NULL;
+        return SD_ERR_IO;
     }
 
-    // // Load .syn synonym file (if exists)
+    // Load .syn synonym file (if exists)
     if (syn_path) {
         stardict->syn = sd_stardict_syn_load(syn_path,
                                              stardict->ifo->syn_wordcount);
-        if (!stardict->syn) {
-            fprintf(stderr, "Warning: Failed to load .syn file, continuing without synonyms\n");
-        }
+        // syn is optional, failure is OK
     }
 
     // Try loading resource storage (res/ directory or res.rdic database)
     char *dirname = get_directory(ifo_path);
     if (dirname) {
         stardict->res = sd_stardict_res_store_load(dirname);
-        if (!stardict->res) {
-            // Resource storage is optional, failure is OK
-            printf("Info: No resource storage found, continuing without resources\n");
-        }
+        // Resource storage is optional, failure is OK
         free(dirname);
     }
 
-    return stardict;
+    *out_dict = stardict;
+    return SD_OK;
 }
 
 /**
  * Open StarDict dictionary file (auto-discover related files)
  */
-sd_stardict *sd_stardict_open(const char *ifo_path) {
-    if (!ifo_path) {
-        fprintf(stderr, "Error: ifo_path is NULL\n");
-        return NULL;
+sd_status sd_stardict_open(const char *ifo_path, sd_stardict **out_dict) {
+    if (!ifo_path || !out_dict) {
+        return SD_ERR_INVALID_PARAM;
     }
+    *out_dict = NULL;
 
     // Construct various file paths
     char *idx_gz_path = replace_extension(ifo_path, ".idx.gz");
@@ -554,13 +546,12 @@ sd_stardict *sd_stardict_open(const char *ifo_path) {
     char *syn_path = replace_extension(ifo_path, ".syn");
 
     if (!idx_gz_path || !idx_path || !dict_path || !dict_dz_path || !syn_path) {
-        fprintf(stderr, "Error: Memory allocation failed for file paths\n");
         free(idx_gz_path);
         free(idx_path);
         free(dict_path);
         free(dict_dz_path);
         free(syn_path);
-        return NULL;
+        return SD_ERR_MEMORY;
     }
 
     // Prefer .idx.gz (if exists)
@@ -571,13 +562,12 @@ sd_stardict *sd_stardict_open(const char *ifo_path) {
     } else if (file_exists(idx_path)) {
         actual_idx_path = idx_path;
     } else {
-        fprintf(stderr, "Error: Neither .idx.gz nor .idx file found\n");
         free(idx_gz_path);
         free(idx_path);
         free(dict_path);
         free(dict_dz_path);
         free(syn_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     // Check for .dict or .dict.dz file
@@ -587,22 +577,21 @@ sd_stardict *sd_stardict_open(const char *ifo_path) {
     } else if (file_exists(dict_dz_path)) {
         actual_dict_path = dict_dz_path;
     } else {
-        fprintf(stderr, "Error: Neither .dict nor .dict.dz file found\n");
         free(idx_gz_path);
         free(idx_path);
         free(dict_path);
         free(dict_dz_path);
         free(syn_path);
-        return NULL;
+        return SD_ERR_IO;
     }
 
     // Check if .syn file exists
     const char *actual_syn_path = file_exists(syn_path) ? syn_path : NULL;
 
     // Call full-path version
-    sd_stardict *result = sd_stardict_open_from_paths(ifo_path, actual_idx_path,
-                                                   actual_dict_path,
-                                                   actual_syn_path);
+    sd_status st = sd_stardict_open_from_paths(ifo_path, actual_idx_path,
+                                               actual_dict_path,
+                                               actual_syn_path, out_dict);
 
     free(idx_gz_path);
     free(idx_path);
@@ -610,7 +599,7 @@ sd_stardict *sd_stardict_open(const char *ifo_path) {
     free(dict_dz_path);
     free(syn_path);
 
-    return result;
+    return st;
 }
 
 // ============================================================

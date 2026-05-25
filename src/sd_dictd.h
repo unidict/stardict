@@ -29,18 +29,21 @@ typedef struct sd_dictd sd_dictd;
 /**
  * Open dictd dictionary file (auto-discover .dict file)
  * @param index_path .index file path
- * @return Dictionary object, NULL on failure
+ * @param out_dict Output dictionary object
+ * @return SD_OK on success, SD_ERR_INVALID_PARAM / SD_ERR_IO / SD_ERR_MEMORY / SD_ERR_FORMAT on failure
  */
-sd_dictd *sd_dictd_open(const char *index_path);
+sd_status sd_dictd_open(const char *index_path, sd_dictd **out_dict);
 
 /**
  * Open dictd dictionary file (specify all file paths)
  * @param index_path .index file path
  * @param dict_path .dict or .dict.dz file path
- * @return Dictionary object, NULL on failure
+ * @param out_dict Output dictionary object
+ * @return SD_OK on success, SD_ERR_INVALID_PARAM / SD_ERR_IO / SD_ERR_MEMORY / SD_ERR_FORMAT on failure
  */
-sd_dictd *sd_dictd_open_from_paths(const char *index_path,
-                                  const char *dict_path);
+sd_status sd_dictd_open_from_paths(const char *index_path,
+                                   const char *dict_path,
+                                   sd_dictd **out_dict);
 
 /**
  * Close dictd dictionary
@@ -56,34 +59,38 @@ void sd_dictd_close(sd_dictd *dictd);
  * Look up index entries by exact key
  * @param dictd dictionary object
  * @param key Search keyword
- * @return Index entry array on success (needs sd_index_entry_array_free), NULL on failure or not found
+ * @param out_index_entries Output index entry array (needs sd_index_entry_array_free)
+ * @return SD_OK on success, SD_NOT_FOUND if no match, SD_ERR_INVALID_PARAM / SD_ERR_MEMORY on error
  */
-sd_index_entry_array *sd_dictd_entry_lookup(sd_dictd *dictd, const char *key);
+sd_status sd_dictd_entry_lookup(sd_dictd *dictd, const char *key, sd_index_entry_array **out_index_entries);
 
 /**
  * Look up all matching entries (a single key may have multiple definitions)
  * @param dictd dictionary object
  * @param key Search keyword
- * @return Result array on success (needs sd_data_entry_array_free), NULL on failure or not found
+ * @param out_data_entries Output data entry array (needs sd_data_entry_array_free)
+ * @return SD_OK on success, SD_NOT_FOUND if no match, SD_ERR_INVALID_PARAM / SD_ERR_MEMORY / SD_ERR_IO on error
  */
-sd_data_entry_array *sd_dictd_lookup(sd_dictd *dictd, const char *key);
+sd_status sd_dictd_lookup(sd_dictd *dictd, const char *key, sd_data_entry_array **out_data_entries);
 
 /**
  * Get word suggestions by prefix
  * @param dictd dictionary object
  * @param prefix Prefix
  * @param max_results Max results (0 = unlimited)
- * @return Index entry array on success (needs sd_index_entry_array_free), NULL on failure or not found
+ * @param out_index_entries Output index entry array (needs sd_index_entry_array_free)
+ * @return SD_OK on success, SD_NOT_FOUND if no match, SD_ERR_INVALID_PARAM / SD_ERR_MEMORY on error
  */
-sd_index_entry_array *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results);
+sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries);
 
 /**
- * Fast lookup word definition using index entry (avoid repeated index search)
+ * Fetch word definition using index entry (avoid repeated index search)
  * @param dictd dictionary object
- * @param entry Index entry (obtained from suggest)
- * @return Result on success (caller must free), NULL on failure
+ * @param entry Index entry (obtained from suggest or entry_lookup)
+ * @param out_definition Output definition string (caller must free)
+ * @return SD_OK on success, SD_NOT_FOUND if not found, SD_ERR_INVALID_PARAM / SD_ERR_IO on error
  */
-char *sd_dictd_lookup_by_index(sd_dictd *dictd, const sd_dictfile_index_entry *entry);
+sd_status sd_dictd_fetch(sd_dictd *dictd, const sd_dictfile_index_entry *entry, char **out_definition);
 
 /**
  * Get internal index object for entry iteration

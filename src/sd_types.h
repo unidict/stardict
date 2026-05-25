@@ -16,6 +16,24 @@
 typedef struct sd_dictfile_index_entry sd_dictfile_index_entry;
 
 // ============================================================
+// Status codes
+// ============================================================
+
+typedef enum {
+    SD_OK                = 0,
+    SD_NOT_FOUND         = 1,
+    SD_DONE              = 2,
+
+    SD_ERR_INVALID_PARAM = -1,
+    SD_ERR_IO            = -2,
+    SD_ERR_MEMORY        = -3,
+    SD_ERR_FORMAT        = -4,
+    SD_ERR_INTERNAL      = -5,
+} sd_status;
+
+const char *sd_strerror(sd_status status);
+
+// ============================================================
 // Result types
 // ============================================================
 
