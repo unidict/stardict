@@ -134,48 +134,43 @@ static void sd_dictd_cleanup(sd_dictd *dictd) {
 // ============================================================
 
 /**
- * Look up all matching entries
+ * Look up index entries by exact key
  */
-sd_lookup_result *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
+sd_index_entry_array *sd_dictd_entry_lookup(sd_dictd *dictd, const char *key) {
     if (!dictd || !key) {
         return NULL;
     }
 
-    // Search entries in index
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(dictd->index, key,
                                                      false, 0);
 
     if (!entries || sd_array_size(entries) == 0) {
-        return NULL;  // Not found
+        return NULL;
     }
 
-    // Build result array
     size_t count = sd_array_size(entries);
-    sd_lookup_result *results = malloc(sizeof(sd_lookup_result));
+    sd_index_entry_array *results = malloc(sizeof(sd_index_entry_array));
     if (!results) {
         sd_dictfile_index_free_entries(entries);
         return NULL;
     }
 
     results->count = count;
-    results->entries = calloc(count, sizeof(sd_lookup_entry));
-    if (!results->entries) {
+    results->items = calloc(count, sizeof(sd_dictfile_index_entry *));
+    if (!results->items) {
         free(results);
         sd_dictfile_index_free_entries(entries);
         return NULL;
     }
 
-    // Read data for each match
     for (size_t i = 0; i < count; i++) {
-        results->entries[i].word = entries[i].word;
-        entries[i].word = NULL;  // Transfer ownership
-
-        sd_dictfile_data_block *block = sd_dictfile_read(dictd->dict,
-                                           entries[i].offset,
-                                           entries[i].size);
-        if (block) {
-            // dictd data is usually plain text
-            results->entries[i].definition = strndup(block->data, block->size);
+        sd_dictfile_index_entry *info = calloc(1, sizeof(sd_dictfile_index_entry));
+        if (info) {
+            info->word = entries[i].word;
+            entries[i].word = NULL;
+            info->offset = entries[i].offset;
+            info->size = entries[i].size;
+            results->items[i] = info;
         }
     }
 
@@ -184,9 +179,53 @@ sd_lookup_result *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
 }
 
 /**
+ * Look up all matching entries
+ */
+sd_data_entry_array *sd_dictd_lookup(sd_dictd *dictd, const char *key) {
+    if (!dictd || !key) {
+        return NULL;
+    }
+
+    sd_index_entry_array *index_results = sd_dictd_entry_lookup(dictd, key);
+    if (!index_results) {
+        return NULL;
+    }
+
+    sd_data_entry_array *results = malloc(sizeof(sd_data_entry_array));
+    if (!results) {
+        sd_index_entry_array_free(index_results);
+        return NULL;
+    }
+
+    results->count = index_results->count;
+    results->items = calloc(index_results->count, sizeof(sd_data_entry));
+    if (!results->items) {
+        free(results);
+        sd_index_entry_array_free(index_results);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < index_results->count; i++) {
+        sd_dictfile_index_entry *entry = index_results->items[i];
+        results->items[i].word = entry->word;
+        entry->word = NULL;
+
+        sd_dictfile_data_block *block = sd_dictfile_read(dictd->dict,
+                                           entry->offset,
+                                           entry->size);
+        if (block) {
+            results->items[i].definition = strndup(block->data, block->size);
+        }
+    }
+
+    sd_index_entry_array_free(index_results);
+    return results;
+}
+
+/**
  * Get word suggestions by prefix
  */
-sd_suggestion_result *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results) {
+sd_index_entry_array *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results) {
     if (!dictd || !prefix) {
         return NULL;
     }
@@ -203,15 +242,15 @@ sd_suggestion_result *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size
     size_t count = sd_array_size(entries);
 
     // Build suggestion list
-    sd_suggestion_result *suggestions = malloc(sizeof(sd_suggestion_result));
+    sd_index_entry_array *suggestions = malloc(sizeof(sd_index_entry_array));
     if (!suggestions) {
         sd_dictfile_index_free_entries(entries);
         return NULL;
     }
 
     suggestions->count = count;
-    suggestions->entries = calloc(count, sizeof(sd_dictfile_index_entry *));
-    if (!suggestions->entries) {
+    suggestions->items = calloc(count, sizeof(sd_dictfile_index_entry *));
+    if (!suggestions->items) {
         free(suggestions);
         sd_dictfile_index_free_entries(entries);
         return NULL;
@@ -225,7 +264,7 @@ sd_suggestion_result *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size
             info->offset = entries[i].offset;
             info->size = entries[i].size;
 
-            suggestions->entries[i] = info;
+            suggestions->items[i] = info;
 
             // Clear original entry's word (prevent double free)
             entries[i].word = NULL;

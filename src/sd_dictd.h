@@ -53,21 +53,29 @@ void sd_dictd_close(sd_dictd *dictd);
 // ============================================================
 
 /**
+ * Look up index entries by exact key
+ * @param dictd dictionary object
+ * @param key Search keyword
+ * @return Index entry array on success (needs sd_index_entry_array_free), NULL on failure or not found
+ */
+sd_index_entry_array *sd_dictd_entry_lookup(sd_dictd *dictd, const char *key);
+
+/**
  * Look up all matching entries (a single key may have multiple definitions)
  * @param dictd dictionary object
  * @param key Search keyword
- * @return Result list on success (needs sd_lookup_result_free), NULL on failure or not found
+ * @return Result array on success (needs sd_data_entry_array_free), NULL on failure or not found
  */
-sd_lookup_result *sd_dictd_lookup(sd_dictd *dictd, const char *key);
+sd_data_entry_array *sd_dictd_lookup(sd_dictd *dictd, const char *key);
 
 /**
  * Get word suggestions by prefix
  * @param dictd dictionary object
  * @param prefix Prefix
  * @param max_results Max results (0 = unlimited)
- * @return Suggestion list on success (needs sd_suggestion_result_free), NULL on failure
+ * @return Index entry array on success (needs sd_index_entry_array_free), NULL on failure or not found
  */
-sd_suggestion_result *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results);
+sd_index_entry_array *sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results);
 
 /**
  * Fast lookup word definition using index entry (avoid repeated index search)

@@ -45,22 +45,22 @@ void test_dictd_close_null(void) {
 // ============================================================
 
 void test_dictd_lookup_null_dict(void) {
-    sd_lookup_result *result = sd_dictd_lookup(NULL, "hello");
+    sd_data_entry_array *result = sd_dictd_lookup(NULL, "hello");
     TEST_ASSERT_NULL(result);
 }
 
 void test_dictd_lookup_null_key(void) {
-    sd_lookup_result *result = sd_dictd_lookup(NULL, NULL);
+    sd_data_entry_array *result = sd_dictd_lookup(NULL, NULL);
     TEST_ASSERT_NULL(result);
 }
 
 void test_dictd_suggest_null_dict(void) {
-    sd_suggestion_result *result = sd_dictd_suggest(NULL, "hel", 10);
+    sd_index_entry_array *result = sd_dictd_suggest(NULL, "hel", 10);
     TEST_ASSERT_NULL(result);
 }
 
 void test_dictd_suggest_null_prefix(void) {
-    sd_suggestion_result *result = sd_dictd_suggest(NULL, NULL, 10);
+    sd_index_entry_array *result = sd_dictd_suggest(NULL, NULL, 10);
     TEST_ASSERT_NULL(result);
 }
 

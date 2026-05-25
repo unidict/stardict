@@ -83,22 +83,22 @@ void test_stardict_get_info_null(void) {
 }
 
 void test_stardict_lookup_null_dict(void) {
-    sd_lookup_result *result = stardict_lookup(NULL, "hello");
+    sd_data_entry_array *result = stardict_lookup(NULL, "hello");
     TEST_ASSERT_NULL(result);
 }
 
 void test_stardict_lookup_null_key(void) {
-    sd_lookup_result *result = stardict_lookup(NULL, NULL);
+    sd_data_entry_array *result = stardict_lookup(NULL, NULL);
     TEST_ASSERT_NULL(result);
 }
 
 void test_stardict_suggest_null_dict(void) {
-    sd_suggestion_result *result = stardict_suggest(NULL, "hel", 10);
+    sd_index_entry_array *result = stardict_suggest(NULL, "hel", 10);
     TEST_ASSERT_NULL(result);
 }
 
 void test_stardict_suggest_null_prefix(void) {
-    sd_suggestion_result *result = stardict_suggest(NULL, NULL, 10);
+    sd_index_entry_array *result = stardict_suggest(NULL, NULL, 10);
     TEST_ASSERT_NULL(result);
 }
 
@@ -124,11 +124,11 @@ void test_stardict_get_index_null(void) {
 // ============================================================
 
 void test_lookup_result_free_null(void) {
-    sd_lookup_result_free(NULL);  // Should not crash
+    sd_data_entry_array_free(NULL);  // Should not crash
 }
 
 void test_suggestion_result_free_null(void) {
-    sd_suggestion_result_free(NULL);  // Should not crash
+    sd_index_entry_array_free(NULL);  // Should not crash
 }
 
 // ============================================================
@@ -231,15 +231,15 @@ void test_stardict_lookup_hello(void) {
     sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_lookup_result *result = stardict_lookup(dict, "hello");
+    sd_data_entry_array *result = stardict_lookup(dict, "hello");
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_size_t(1, result->count);
-    TEST_ASSERT_NOT_NULL(result->entries[0].word);
-    TEST_ASSERT_EQUAL_STRING("hello", result->entries[0].word);
-    TEST_ASSERT_NOT_NULL(result->entries[0].definition);
-    TEST_ASSERT_NOT_NULL(strstr(result->entries[0].definition, "Hello"));
+    TEST_ASSERT_NOT_NULL(result->items[0].word);
+    TEST_ASSERT_EQUAL_STRING("hello", result->items[0].word);
+    TEST_ASSERT_NOT_NULL(result->items[0].definition);
+    TEST_ASSERT_NOT_NULL(strstr(result->items[0].definition, "Hello"));
 
-    sd_lookup_result_free(result);
+    sd_data_entry_array_free(result);
     sd_stardict_close(dict);
 }
 
@@ -247,7 +247,7 @@ void test_stardict_lookup_not_found(void) {
     sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_lookup_result *result = stardict_lookup(dict, "xyznonexistent12345");
+    sd_data_entry_array *result = stardict_lookup(dict, "xyznonexistent12345");
     TEST_ASSERT_NULL(result);
 
     sd_stardict_close(dict);
@@ -257,12 +257,12 @@ void test_stardict_lookup_a(void) {
     sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_lookup_result *result = stardict_lookup(dict, "a");
+    sd_data_entry_array *result = stardict_lookup(dict, "a");
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_TRUE(result->count >= 1);
-    TEST_ASSERT_NOT_NULL(result->entries[0].definition);
+    TEST_ASSERT_NOT_NULL(result->items[0].definition);
 
-    sd_lookup_result_free(result);
+    sd_data_entry_array_free(result);
     sd_stardict_close(dict);
 }
 
@@ -274,16 +274,16 @@ void test_stardict_suggest_h_prefix(void) {
     sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_suggestion_result *result = stardict_suggest(dict, "h", 5);
+    sd_index_entry_array *result = stardict_suggest(dict, "h", 5);
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_size_t(5, result->count);
-    TEST_ASSERT_EQUAL_STRING("H", result->entries[0]->word);
-    TEST_ASSERT_EQUAL_STRING("h", result->entries[1]->word);
-    TEST_ASSERT_EQUAL_STRING("H-bomb", result->entries[2]->word);
-    TEST_ASSERT_EQUAL_STRING("H.C.F.", result->entries[3]->word);
-    TEST_ASSERT_EQUAL_STRING("h.p.", result->entries[4]->word);
+    TEST_ASSERT_EQUAL_STRING("H", result->items[0]->word);
+    TEST_ASSERT_EQUAL_STRING("h", result->items[1]->word);
+    TEST_ASSERT_EQUAL_STRING("H-bomb", result->items[2]->word);
+    TEST_ASSERT_EQUAL_STRING("H.C.F.", result->items[3]->word);
+    TEST_ASSERT_EQUAL_STRING("h.p.", result->items[4]->word);
 
-    sd_suggestion_result_free(result);
+    sd_index_entry_array_free(result);
     sd_stardict_close(dict);
 }
 
@@ -291,7 +291,7 @@ void test_stardict_suggest_not_found(void) {
     sd_stardict *dict = sd_stardict_open(TEST_IFO_PATH);
     TEST_ASSERT_NOT_NULL(dict);
 
-    sd_suggestion_result *result = stardict_suggest(dict, "zzzzzzz", 10);
+    sd_index_entry_array *result = stardict_suggest(dict, "zzzzzzz", 10);
     TEST_ASSERT_NULL(result);
 
     sd_stardict_close(dict);
@@ -306,17 +306,17 @@ void test_stardict_lookup_by_index(void) {
     TEST_ASSERT_NOT_NULL(dict);
 
     // First get an entry via suggest
-    sd_suggestion_result *sg = stardict_suggest(dict, "hello", 1);
+    sd_index_entry_array *sg = stardict_suggest(dict, "hello", 1);
     TEST_ASSERT_NOT_NULL(sg);
     TEST_ASSERT_EQUAL_size_t(1, sg->count);
 
     // Then use lookup_by_index for fast definition retrieval
-    char *def = stardict_lookup_by_index(dict, sg->entries[0]);
+    char *def = stardict_lookup_by_index(dict, sg->items[0]);
     TEST_ASSERT_NOT_NULL(def);
     TEST_ASSERT_NOT_NULL(strstr(def, "Hello"));
     free(def);
 
-    sd_suggestion_result_free(sg);
+    sd_index_entry_array_free(sg);
     sd_stardict_close(dict);
 }
 

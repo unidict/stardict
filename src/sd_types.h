@@ -16,25 +16,25 @@
 typedef struct sd_dictfile_index_entry sd_dictfile_index_entry;
 
 // ============================================================
-// Generic dictionary result types
+// Result types
 // ============================================================
 
 typedef struct {
-    size_t count;                                // Suggestion count
-    struct sd_dictfile_index_entry **entries; // Suggestion array
-} sd_suggestion_result;
+    size_t count;                                // Entry count
+    struct sd_dictfile_index_entry **items;      // Index entry array
+} sd_index_entry_array;
 
 typedef struct {
     char *word;        // Original headword from index entry
     char *definition;  // Definition text
-} sd_lookup_entry;
+} sd_data_entry;
 
 typedef struct {
     size_t count;
-    sd_lookup_entry *entries;  // Result array (word + definition pairs)
-} sd_lookup_result;
+    sd_data_entry *items;  // Data entry array
+} sd_data_entry_array;
 
-void sd_suggestion_result_free(sd_suggestion_result *result);
-void sd_lookup_result_free(sd_lookup_result *result);
+void sd_index_entry_array_free(sd_index_entry_array *result);
+void sd_data_entry_array_free(sd_data_entry_array *result);
 
 #endif /* sd_types_h */

@@ -64,21 +64,29 @@ void sd_stardict_close(sd_stardict *stardict);
 const sd_stardict_ifo *stardict_get_info(sd_stardict *stardict);
 
 /**
+ * Look up index entries by exact key
+ * @param stardict Dictionary object
+ * @param key Search keyword
+ * @return Index entry array on success (needs sd_index_entry_array_free), NULL on failure or not found
+ */
+sd_index_entry_array *stardict_entry_lookup(sd_stardict *stardict, const char *key);
+
+/**
  * Look up all matching entries (a single key may have multiple definitions)
  * @param stardict Dictionary object
  * @param key Search keyword
- * @return Result list on success (needs sd_lookup_result_free), NULL on failure
+ * @return Result array on success (needs sd_data_entry_array_free), NULL on failure or not found
  */
-sd_lookup_result *stardict_lookup(sd_stardict *stardict, const char *key);
+sd_data_entry_array *stardict_lookup(sd_stardict *stardict, const char *key);
 
 /**
  * Get word suggestions by prefix
  * @param stardict Dictionary object
  * @param prefix Prefix
  * @param max_results Max results (0 = unlimited)
- * @return Suggestion list on success (needs sd_suggestion_result_free), NULL on failure
+ * @return Index entry array on success (needs sd_index_entry_array_free), NULL on failure or not found
  */
-sd_suggestion_result *stardict_suggest(sd_stardict *stardict, const char *prefix, size_t max_results);
+sd_index_entry_array *stardict_suggest(sd_stardict *stardict, const char *prefix, size_t max_results);
 
 /**
  * Fast lookup word definition using index entry (avoid repeated index search)

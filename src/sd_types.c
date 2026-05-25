@@ -9,30 +9,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-void sd_suggestion_result_free(sd_suggestion_result *result) {
+void sd_index_entry_array_free(sd_index_entry_array *result) {
     if (!result) return;
 
-    if (result->entries) {
+    if (result->items) {
         for (size_t i = 0; i < result->count; i++) {
-            if (result->entries[i]) {
-                free(result->entries[i]->word);
-                free(result->entries[i]);  // sd_dictfile_index_entry is malloc allocated
+            if (result->items[i]) {
+                free(result->items[i]->word);
+                free(result->items[i]);  // sd_dictfile_index_entry is malloc allocated
             }
         }
-        free(result->entries);
+        free(result->items);
     }
     free(result);
 }
 
-void sd_lookup_result_free(sd_lookup_result *result) {
+void sd_data_entry_array_free(sd_data_entry_array *result) {
     if (!result) return;
 
-    if (result->entries) {
+    if (result->items) {
         for (size_t i = 0; i < result->count; i++) {
-            free(result->entries[i].word);
-            free(result->entries[i].definition);
+            free(result->items[i].word);
+            free(result->items[i].definition);
         }
-        free(result->entries);
+        free(result->items);
     }
     free(result);
 }
