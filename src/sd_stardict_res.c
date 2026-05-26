@@ -220,7 +220,13 @@ static int load_rifo_file(const char *rifo_path, sd_stardict_res *store) {
         return -1;
     }
 
-    // ridxfilesize is optional, not parsed for now
+    // Parse ridxfilesize (used for decompression buffer sizing)
+    char *ridx_size_str = ifo_get_value(content, "ridxfilesize");
+    if (ridx_size_str) {
+        store->ridx_filesize = (uint32_t)atoi(ridx_size_str);
+        free(ridx_size_str);
+    }
+
     free(content);
     return 0;
 }
@@ -333,40 +339,61 @@ static int load_ridx_gz(const char *dirname, sd_stardict_res *store) {
         free(ridx_gz_path);
         return -1;
     }
+    free(ridx_gz_path);
 
-    // Get file size for estimation
-    SD_STAT_STRUCT st;
-    if (sd_stat(ridx_gz_path, &st) != 0) {
-        gzclose(gzf);
-        free(ridx_gz_path);
-        return -1;
-    }
+    // Determine buffer size from rifo metadata if available
+    size_t buffer_size = store->ridx_filesize > 0 ? store->ridx_filesize : 0;
+    size_t buffer_capacity = buffer_size > 0 ? buffer_size : 65536;
+    size_t total_read = 0;
 
-    // Pre-allocate buffer
-    size_t buffer_size = st.st_size * 3;
-    char *buffer = (char *)malloc(buffer_size);
+    char *buffer = (char *)malloc(buffer_capacity);
     if (!buffer) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         gzclose(gzf);
-        free(ridx_gz_path);
         return -1;
     }
 
-    // Decompress
-    int bytes_read = gzread(gzf, buffer, buffer_size);
-    gzclose(gzf);
-    free(ridx_gz_path);
+    // Streaming decompression loop
+    for (;;) {
+        int chunk = gzread(gzf, buffer + total_read,
+                           (unsigned)(buffer_capacity - total_read));
+        if (chunk < 0) {
+            fprintf(stderr, "Error: Failed to decompress res.ridx.gz\n");
+            free(buffer);
+            gzclose(gzf);
+            return -1;
+        }
+        if (chunk == 0) break;
 
-    if (bytes_read <= 0) {
-        fprintf(stderr, "Error: Failed to decompress res.ridx.gz\n");
+        total_read += chunk;
+
+        // Grow buffer if needed (only when ridx_filesize was unknown)
+        if (total_read == buffer_capacity) {
+            size_t new_cap = buffer_capacity * 2;
+            char *new_buf = (char *)realloc(buffer, new_cap);
+            if (!new_buf) {
+                fprintf(stderr, "Error: Memory allocation failed\n");
+                free(buffer);
+                gzclose(gzf);
+                return -1;
+            }
+            buffer = new_buf;
+            buffer_capacity = new_cap;
+        }
+    }
+
+    gzclose(gzf);
+
+    if (total_read == 0) {
+        fprintf(stderr, "Error: res.ridx.gz is empty\n");
         free(buffer);
         return -1;
     }
 
-    printf("Decompressed: %d bytes\n", bytes_read);
+    printf("Decompressed: %zu bytes\n", total_read);
 
     // Parse
-    int result = parse_ridx_data(buffer, bytes_read, store);
+    int result = parse_ridx_data(buffer, total_read, store);
     free(buffer);  // Free decompression buffer immediately
 
     if (result == 0) {

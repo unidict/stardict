@@ -49,6 +49,7 @@ typedef struct sd_stardict_res_store {
 
     // Resource database mode (res.rifo/ridx/rdic)
     uint32_t filecount;           // File count
+    uint32_t ridx_filesize;       // Uncompressed ridx file size (from res.rifo)
     sd_stardict_res_entry *entries;  // Sorted index entry array
 
     // Database file handle
