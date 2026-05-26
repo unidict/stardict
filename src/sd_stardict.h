@@ -29,25 +29,11 @@ typedef struct sd_stardict sd_stardict;
 /**
  * Open StarDict dictionary file (auto-discover .idx, .dict, etc.)
  * @param ifo_path .ifo file path
+ * @param data_only true to load only .ifo and .dict (skip .idx and .syn)
  * @param out_dict Output dictionary object
  * @return SD_OK on success, SD_ERR_INVALID_PARAM / SD_ERR_IO / SD_ERR_MEMORY / SD_ERR_FORMAT on failure
  */
-sd_status sd_stardict_open(const char *ifo_path, sd_stardict **out_dict);
-
-/**
- * Open StarDict dictionary file (specify all file paths)
- * @param ifo_path .ifo file path
- * @param idx_path .idx file path
- * @param dict_path .dict or .dict.dz file path
- * @param syn_path .syn file path (can be NULL)
- * @param out_dict Output dictionary object
- * @return SD_OK on success, SD_ERR_INVALID_PARAM / SD_ERR_IO / SD_ERR_MEMORY / SD_ERR_FORMAT on failure
- */
-sd_status sd_stardict_open_from_paths(const char *ifo_path,
-                                      const char *idx_path,
-                                      const char *dict_path,
-                                      const char *syn_path,
-                                      sd_stardict **out_dict);
+sd_status sd_stardict_open(const char *ifo_path, bool data_only, sd_stardict **out_dict);
 
 /**
  * Close StarDict dictionary
@@ -88,11 +74,11 @@ sd_status stardict_lookup(sd_stardict *stardict, const char *key, sd_data_entry_
  * Get word suggestions by prefix
  * @param stardict Dictionary object
  * @param prefix Prefix
- * @param max_results Max results (0 = unlimited)
+ * @param limit Max results (0 = unlimited)
  * @param out_index_entries Output index entry array (needs sd_index_entry_array_free)
  * @return SD_OK on success, SD_NOT_FOUND if no match, SD_ERR_INVALID_PARAM / SD_ERR_MEMORY on error
  */
-sd_status stardict_suggest(sd_stardict *stardict, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries);
+sd_status stardict_suggest(sd_stardict *stardict, const char *prefix, size_t limit, sd_index_entry_array **out_index_entries);
 
 /**
  * Fetch word definition using index entry (avoid repeated index search)

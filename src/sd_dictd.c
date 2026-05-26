@@ -140,6 +140,9 @@ sd_status sd_dictd_entry_lookup(sd_dictd *dictd, const char *key, sd_index_entry
     if (!dictd || !key || !out_index_entries) {
         return SD_ERR_INVALID_PARAM;
     }
+    if (!dictd->index) {
+        return SD_ERR_STATE;
+    }
     *out_index_entries = NULL;
 
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(dictd->index, key,
@@ -187,6 +190,9 @@ sd_status sd_dictd_lookup(sd_dictd *dictd, const char *key, sd_data_entry_array 
     if (!dictd || !key || !out_data_entries) {
         return SD_ERR_INVALID_PARAM;
     }
+    if (!dictd->index) {
+        return SD_ERR_STATE;
+    }
     *out_data_entries = NULL;
 
     sd_index_entry_array *index_results = NULL;
@@ -230,15 +236,18 @@ sd_status sd_dictd_lookup(sd_dictd *dictd, const char *key, sd_data_entry_array 
 /**
  * Get word suggestions by prefix
  */
-sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries) {
+sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t limit, sd_index_entry_array **out_index_entries) {
     if (!dictd || !prefix || !out_index_entries) {
         return SD_ERR_INVALID_PARAM;
+    }
+    if (!dictd->index) {
+        return SD_ERR_STATE;
     }
     *out_index_entries = NULL;
 
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(dictd->index, prefix,
                                                      true,
-                                                     (uint32_t)max_results);
+                                                     (uint32_t)limit);
 
     if (!entries || sd_array_size(entries) == 0) {
         return SD_NOT_FOUND;
@@ -326,18 +335,21 @@ sd_dictd_paths sd_dictd_get_paths(sd_dictd *dictd) {
 /**
  * Open dictd dictionary file (specify all file paths)
  */
-sd_status sd_dictd_open_from_paths(const char *index_path,
+static sd_status sd_dictd_open_from_paths(const char *index_path,
                                    const char *dict_path,
+                                   bool load_index,
                                    sd_dictd **out_dict) {
-    if (!index_path || !dict_path || !out_dict) {
+    if (!dict_path || !out_dict) {
         return SD_ERR_INVALID_PARAM;
     }
     *out_dict = NULL;
 
     // Verify files exist
     SD_STAT_STRUCT st;
-    if (sd_stat(index_path, &st) != 0 || !SD_ISREG(st.st_mode)) {
-        return SD_ERR_IO;
+    if (index_path && load_index) {
+        if (sd_stat(index_path, &st) != 0 || !SD_ISREG(st.st_mode)) {
+            return SD_ERR_IO;
+        }
     }
 
     if (sd_stat(dict_path, &st) != 0 || !SD_ISREG(st.st_mode)) {
@@ -351,21 +363,28 @@ sd_status sd_dictd_open_from_paths(const char *index_path,
     }
 
     // Copy paths
-    dictd->index_path = strdup(index_path);
+    if (index_path) dictd->index_path = strdup(index_path);
     dictd->dict_path = strdup(dict_path);
 
-    if (!dictd->index_path || !dictd->dict_path) {
+    if (!dictd->dict_path) {
+        sd_dictd_cleanup(dictd);
+        free(dictd);
+        return SD_ERR_MEMORY;
+    }
+    if (index_path && !dictd->index_path) {
         sd_dictd_cleanup(dictd);
         free(dictd);
         return SD_ERR_MEMORY;
     }
 
-    // Load .index index file
-    dictd->index = sd_dictfile_index_open(index_path, dictd_parse_entry, 0, 0);
-    if (!dictd->index) {
-        sd_dictd_cleanup(dictd);
-        free(dictd);
-        return SD_ERR_FORMAT;
+    // Load .index index file (skip in data_only mode)
+    if (index_path && load_index) {
+        dictd->index = sd_dictfile_index_open(index_path, dictd_parse_entry, 0, 0);
+        if (!dictd->index) {
+            sd_dictd_cleanup(dictd);
+            free(dictd);
+            return SD_ERR_FORMAT;
+        }
     }
 
     // Open .dict data file
@@ -383,7 +402,7 @@ sd_status sd_dictd_open_from_paths(const char *index_path,
 /**
  * Open dictd dictionary file (auto-discover related files)
  */
-sd_status sd_dictd_open(const char *index_path, sd_dictd **out_dict) {
+sd_status sd_dictd_open(const char *index_path, bool data_only, sd_dictd **out_dict) {
     if (!index_path || !out_dict) {
         return SD_ERR_INVALID_PARAM;
     }
@@ -422,7 +441,8 @@ sd_status sd_dictd_open(const char *index_path, sd_dictd **out_dict) {
     }
 
     // Call full-path version
-    sd_status status = sd_dictd_open_from_paths(index_path, actual_dict_path, out_dict);
+    bool load_index = !data_only;
+    sd_status status = sd_dictd_open_from_paths(index_path, actual_dict_path, load_index, out_dict);
 
     free(dict_path);
     free(dict_dz_path);

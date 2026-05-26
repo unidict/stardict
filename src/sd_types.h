@@ -29,6 +29,7 @@ typedef enum {
     SD_ERR_MEMORY        = -3,
     SD_ERR_FORMAT        = -4,
     SD_ERR_INTERNAL      = -5,
+    SD_ERR_STATE         = -6,
 } sd_status;
 
 const char *sd_strerror(sd_status status);

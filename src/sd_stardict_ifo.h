@@ -31,8 +31,8 @@ typedef struct sd_stardict_ifo {
     char *website;             // Website
     char *date;                // Date
     char *description;         // Description
-    uint64_t index_file_size;  // .idx file size
-    uint64_t syn_file_size;    // .syn file size (0 means not available)
+    uint32_t index_file_size;  // .idx file size
+    uint32_t syn_file_size;    // .syn file size (0 means not available)
     char *sametypesequence;    // Data type sequence
 
     // Internal fields

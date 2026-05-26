@@ -233,11 +233,11 @@ sd_stardict_ifo *sd_stardict_ifo_load(const char *ifo_filename) {
                 ifo->sametypesequence = value;
                 value = NULL;
             } else if (strcmp(key, "idxfilesize") == 0 && value) {
-                ifo->index_file_size = (uint64_t)atoll(value);
+                ifo->index_file_size = (uint32_t)atol(value);
             } else if (strcmp(key, "tdxfilesize") == 0 && value) {
-                ifo->index_file_size = (uint64_t)atoll(value);
+                ifo->index_file_size = (uint32_t)atol(value);
             } else if (strcmp(key, "synfilesize") == 0 && value) {
-                ifo->syn_file_size = (uint64_t)atoll(value);
+                ifo->syn_file_size = (uint32_t)atol(value);
             }
 
             free(key);

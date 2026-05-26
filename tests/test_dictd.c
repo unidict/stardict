@@ -18,29 +18,15 @@
 
 void test_dictd_open_null(void) {
     sd_dictd *dict = NULL;
-    sd_status st = sd_dictd_open(NULL, &dict);
+    sd_status st = sd_dictd_open(NULL, false, &dict);
     TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(dict);
 }
 
 void test_dictd_open_nonexistent(void) {
     sd_dictd *dict = NULL;
-    sd_status st = sd_dictd_open("/tmp/nonexistent_dictd_file_12345.index", &dict);
+    sd_status st = sd_dictd_open("/tmp/nonexistent_dictd_file_12345.index", false, &dict);
     TEST_ASSERT_TRUE(st != SD_OK);
-    TEST_ASSERT_NULL(dict);
-}
-
-void test_dictd_open_from_paths_null_index(void) {
-    sd_dictd *dict = NULL;
-    sd_status st = sd_dictd_open_from_paths(NULL, "/tmp/a.dict", &dict);
-    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
-    TEST_ASSERT_NULL(dict);
-}
-
-void test_dictd_open_from_paths_null_dict(void) {
-    sd_dictd *dict = NULL;
-    sd_status st = sd_dictd_open_from_paths("/tmp/a.index", NULL, &dict);
-    TEST_ASSERT_EQUAL(SD_ERR_INVALID_PARAM, st);
     TEST_ASSERT_NULL(dict);
 }
 
@@ -110,8 +96,6 @@ void run_dictd_tests(void) {
 
     RUN_TEST(test_dictd_open_null);
     RUN_TEST(test_dictd_open_nonexistent);
-    RUN_TEST(test_dictd_open_from_paths_null_index);
-    RUN_TEST(test_dictd_open_from_paths_null_dict);
     RUN_TEST(test_dictd_close_null);
     RUN_TEST(test_dictd_lookup_null_dict);
     RUN_TEST(test_dictd_lookup_null_key);

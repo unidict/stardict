@@ -29,21 +29,11 @@ typedef struct sd_dictd sd_dictd;
 /**
  * Open dictd dictionary file (auto-discover .dict file)
  * @param index_path .index file path
+ * @param data_only true to load only .dict (skip .index)
  * @param out_dict Output dictionary object
  * @return SD_OK on success, SD_ERR_INVALID_PARAM / SD_ERR_IO / SD_ERR_MEMORY / SD_ERR_FORMAT on failure
  */
-sd_status sd_dictd_open(const char *index_path, sd_dictd **out_dict);
-
-/**
- * Open dictd dictionary file (specify all file paths)
- * @param index_path .index file path
- * @param dict_path .dict or .dict.dz file path
- * @param out_dict Output dictionary object
- * @return SD_OK on success, SD_ERR_INVALID_PARAM / SD_ERR_IO / SD_ERR_MEMORY / SD_ERR_FORMAT on failure
- */
-sd_status sd_dictd_open_from_paths(const char *index_path,
-                                   const char *dict_path,
-                                   sd_dictd **out_dict);
+sd_status sd_dictd_open(const char *index_path, bool data_only, sd_dictd **out_dict);
 
 /**
  * Close dictd dictionary
@@ -77,11 +67,11 @@ sd_status sd_dictd_lookup(sd_dictd *dictd, const char *key, sd_data_entry_array 
  * Get word suggestions by prefix
  * @param dictd dictionary object
  * @param prefix Prefix
- * @param max_results Max results (0 = unlimited)
+ * @param limit Max results (0 = unlimited)
  * @param out_index_entries Output index entry array (needs sd_index_entry_array_free)
  * @return SD_OK on success, SD_NOT_FOUND if no match, SD_ERR_INVALID_PARAM / SD_ERR_MEMORY on error
  */
-sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries);
+sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t limit, sd_index_entry_array **out_index_entries);
 
 /**
  * Fetch word definition using index entry (avoid repeated index search)

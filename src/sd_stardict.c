@@ -209,6 +209,9 @@ sd_status stardict_entry_lookup(sd_stardict *stardict, const char *key, sd_index
     if (!stardict || !key || !out_index_entries) {
         return SD_ERR_INVALID_PARAM;
     }
+    if (!stardict->idx) {
+        return SD_ERR_STATE;
+    }
     *out_index_entries = NULL;
 
     // Collect all entries (synonyms + direct matches)
@@ -291,6 +294,9 @@ sd_status stardict_lookup(sd_stardict *stardict, const char *key, sd_data_entry_
     if (!stardict || !key || !out_data_entries) {
         return SD_ERR_INVALID_PARAM;
     }
+    if (!stardict->idx) {
+        return SD_ERR_STATE;
+    }
     *out_data_entries = NULL;
 
     sd_index_entry_array *index_results = NULL;
@@ -337,15 +343,18 @@ sd_status stardict_lookup(sd_stardict *stardict, const char *key, sd_data_entry_
 /**
  * Get word suggestions by prefix
  */
-sd_status stardict_suggest(sd_stardict *stardict, const char *prefix, size_t max_results, sd_index_entry_array **out_index_entries) {
+sd_status stardict_suggest(sd_stardict *stardict, const char *prefix, size_t limit, sd_index_entry_array **out_index_entries) {
     if (!stardict || !prefix || !out_index_entries) {
         return SD_ERR_INVALID_PARAM;
+    }
+    if (!stardict->idx) {
+        return SD_ERR_STATE;
     }
     *out_index_entries = NULL;
 
     // Prefix match
     sd_array(sd_dictfile_index_entry) entries = sd_dictfile_index_lookup(
-        stardict->idx, prefix, true, max_results);
+        stardict->idx, prefix, true, limit);
 
     if (!entries || sd_array_size(entries) == 0) {
         if (entries) sd_dictfile_index_free_entries(entries);
@@ -437,12 +446,12 @@ sd_stardict_paths sd_stardict_get_paths(sd_stardict *stardict) {
 /**
  * Open StarDict dictionary file (specify all file paths)
  */
-sd_status sd_stardict_open_from_paths(const char *ifo_path,
+static sd_status sd_stardict_open_from_paths(const char *ifo_path,
                                       const char *idx_path,
                                       const char *dict_path,
                                       const char *syn_path,
                                       sd_stardict **out_dict) {
-    if (!ifo_path || !idx_path || !dict_path || !out_dict) {
+    if (!ifo_path || !dict_path || !out_dict) {
         return SD_ERR_INVALID_PARAM;
     }
     *out_dict = NULL;
@@ -452,7 +461,7 @@ sd_status sd_stardict_open_from_paths(const char *ifo_path,
         return SD_ERR_IO;
     }
 
-    if (!file_exists(idx_path)) {
+    if (idx_path && !file_exists(idx_path)) {
         return SD_ERR_IO;
     }
 
@@ -472,13 +481,18 @@ sd_status sd_stardict_open_from_paths(const char *ifo_path,
 
     // Copy paths
     stardict->ifo_path = strdup(ifo_path);
-    stardict->idx_path = strdup(idx_path);
+    if (idx_path) stardict->idx_path = strdup(idx_path);
     stardict->dict_path = strdup(dict_path);
     if (syn_path) {
         stardict->syn_path = strdup(syn_path);
     }
 
-    if (!stardict->ifo_path || !stardict->idx_path || !stardict->dict_path) {
+    if (!stardict->ifo_path || !stardict->dict_path) {
+        sd_stardict_cleanup(stardict);
+        free(stardict);
+        return SD_ERR_MEMORY;
+    }
+    if (idx_path && !stardict->idx_path) {
         sd_stardict_cleanup(stardict);
         free(stardict);
         return SD_ERR_MEMORY;
@@ -492,14 +506,16 @@ sd_status sd_stardict_open_from_paths(const char *ifo_path,
         return SD_ERR_FORMAT;
     }
 
-    // Load .idx index file
-    stardict->idx = sd_dictfile_index_open(idx_path, stardict_parse_entry,
-                                      stardict->ifo->wordcount,
-                                      stardict->ifo->index_file_size);
-    if (!stardict->idx) {
-        sd_stardict_cleanup(stardict);
-        free(stardict);
-        return SD_ERR_FORMAT;
+    // Load .idx index file (skip in data_only mode)
+    if (idx_path) {
+        stardict->idx = sd_dictfile_index_open(idx_path, stardict_parse_entry,
+                                          stardict->ifo->wordcount,
+                                          stardict->ifo->index_file_size);
+        if (!stardict->idx) {
+            sd_stardict_cleanup(stardict);
+            free(stardict);
+            return SD_ERR_FORMAT;
+        }
     }
 
     // Open .dict data file
@@ -532,7 +548,7 @@ sd_status sd_stardict_open_from_paths(const char *ifo_path,
 /**
  * Open StarDict dictionary file (auto-discover related files)
  */
-sd_status sd_stardict_open(const char *ifo_path, sd_stardict **out_dict) {
+sd_status sd_stardict_open(const char *ifo_path, bool data_only, sd_stardict **out_dict) {
     if (!ifo_path || !out_dict) {
         return SD_ERR_INVALID_PARAM;
     }
@@ -554,20 +570,22 @@ sd_status sd_stardict_open(const char *ifo_path, sd_stardict **out_dict) {
         return SD_ERR_MEMORY;
     }
 
-    // Prefer .idx.gz (if exists)
+    // In data_only mode, skip .idx and .syn
     const char *actual_idx_path = NULL;
-
-    if (file_exists(idx_gz_path)) {
-        actual_idx_path = idx_gz_path;
-    } else if (file_exists(idx_path)) {
-        actual_idx_path = idx_path;
-    } else {
-        free(idx_gz_path);
-        free(idx_path);
-        free(dict_path);
-        free(dict_dz_path);
-        free(syn_path);
-        return SD_ERR_IO;
+    if (!data_only) {
+        // Prefer .idx.gz (if exists)
+        if (file_exists(idx_gz_path)) {
+            actual_idx_path = idx_gz_path;
+        } else if (file_exists(idx_path)) {
+            actual_idx_path = idx_path;
+        } else {
+            free(idx_gz_path);
+            free(idx_path);
+            free(dict_path);
+            free(dict_dz_path);
+            free(syn_path);
+            return SD_ERR_IO;
+        }
     }
 
     // Check for .dict or .dict.dz file
@@ -585,8 +603,11 @@ sd_status sd_stardict_open(const char *ifo_path, sd_stardict **out_dict) {
         return SD_ERR_IO;
     }
 
-    // Check if .syn file exists
-    const char *actual_syn_path = file_exists(syn_path) ? syn_path : NULL;
+    // Check if .syn file exists (skip in data_only mode)
+    const char *actual_syn_path = NULL;
+    if (!data_only) {
+        actual_syn_path = file_exists(syn_path) ? syn_path : NULL;
+    }
 
     // Call full-path version
     sd_status st = sd_stardict_open_from_paths(ifo_path, actual_idx_path,
