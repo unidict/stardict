@@ -153,33 +153,33 @@ sd_status sd_dictd_entry_lookup(sd_dictd *dictd, const char *key, sd_index_entry
     }
 
     size_t count = sd_array_size(entries);
-    sd_index_entry_array *results = malloc(sizeof(sd_index_entry_array));
-    if (!results) {
+    sd_index_entry_array *index_entries = malloc(sizeof(sd_index_entry_array));
+    if (!index_entries) {
         sd_dictfile_index_free_entries(entries);
         return SD_ERR_MEMORY;
     }
 
-    results->count = count;
-    results->items = calloc(count, sizeof(sd_dictfile_index_entry *));
-    if (!results->items) {
-        free(results);
+    index_entries->count = count;
+    index_entries->items = calloc(count, sizeof(sd_dictfile_index_entry *));
+    if (!index_entries->items) {
+        free(index_entries);
         sd_dictfile_index_free_entries(entries);
         return SD_ERR_MEMORY;
     }
 
     for (size_t i = 0; i < count; i++) {
-        sd_dictfile_index_entry *info = calloc(1, sizeof(sd_dictfile_index_entry));
-        if (info) {
-            info->word = entries[i].word;
+        sd_dictfile_index_entry *index_entry = calloc(1, sizeof(sd_dictfile_index_entry));
+        if (index_entry) {
+            index_entry->word = entries[i].word;
             entries[i].word = NULL;
-            info->offset = entries[i].offset;
-            info->size = entries[i].size;
-            results->items[i] = info;
+            index_entry->offset = entries[i].offset;
+            index_entry->size = entries[i].size;
+            index_entries->items[i] = index_entry;
         }
     }
 
     sd_dictfile_index_free_entries(entries);
-    *out_index_entries = results;
+    *out_index_entries = index_entries;
     return SD_OK;
 }
 
@@ -270,13 +270,13 @@ sd_status sd_dictd_suggest(sd_dictd *dictd, const char *prefix, size_t limit, sd
     }
 
     for (size_t i = 0; i < count; i++) {
-        sd_dictfile_index_entry *info = calloc(1, sizeof(sd_dictfile_index_entry));
-        if (info) {
-            info->word = entries[i].word;  // Transfer ownership
-            info->offset = entries[i].offset;
-            info->size = entries[i].size;
+        sd_dictfile_index_entry *index_entry = calloc(1, sizeof(sd_dictfile_index_entry));
+        if (index_entry) {
+            index_entry->word = entries[i].word;  // Transfer ownership
+            index_entry->offset = entries[i].offset;
+            index_entry->size = entries[i].size;
 
-            suggestions->items[i] = info;
+            suggestions->items[i] = index_entry;
 
             entries[i].word = NULL;  // Prevent double free
         }
