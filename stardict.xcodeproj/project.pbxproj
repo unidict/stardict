@@ -34,8 +34,9 @@
 
 /* Begin PBXFileReference section */
 		692F0EDF2F85F91B0037745D /* libstardict.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libstardict.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		692F11EA2F87795B0037745D /* sd_tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sd_tests; sourceTree = BUILT_PRODUCTS_DIR; };
+		692F11EA2F87795B0037745D /* stardict-tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "stardict-tests"; sourceTree = BUILT_PRODUCTS_DIR; };
 		692F1DBF2F91F5D10037745D /* dictzip.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = dictzip.xcodeproj; sourceTree = "<group>"; };
+		698985F82FDE451E00D4E83D /* dictzip.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = dictzip.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -146,7 +147,7 @@
 			isa = PBXGroup;
 			children = (
 				692F0EDF2F85F91B0037745D /* libstardict.a */,
-				692F11EA2F87795B0037745D /* sd_tests */,
+				692F11EA2F87795B0037745D /* stardict-tests */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -159,6 +160,13 @@
 			sourceTree = "<group>";
 		};
 		692F1DC32F91F5D10037745D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		698985FB2FDE451E00D4E83D /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -200,9 +208,9 @@
 			productReference = 692F0EDF2F85F91B0037745D /* libstardict.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		692F11E92F87795B0037745D /* sd_tests */ = {
+		692F11E92F87795B0037745D /* stardict-tests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 692F11EE2F87795C0037745D /* Build configuration list for PBXNativeTarget "sd_tests" */;
+			buildConfigurationList = 692F11EE2F87795C0037745D /* Build configuration list for PBXNativeTarget "stardict-tests" */;
 			buildPhases = (
 				692F11E62F87795B0037745D /* Sources */,
 				692F11E72F87795B0037745D /* Frameworks */,
@@ -216,11 +224,11 @@
 			fileSystemSynchronizedGroups = (
 				692F12B02F892DA70037745D /* tests */,
 			);
-			name = sd_tests;
+			name = "stardict-tests";
 			packageProductDependencies = (
 			);
 			productName = sd_tests;
-			productReference = 692F11EA2F87795B0037745D /* sd_tests */;
+			productReference = 692F11EA2F87795B0037745D /* stardict-tests */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -257,11 +265,15 @@
 					ProductGroup = 692F1DC32F91F5D10037745D /* Products */;
 					ProjectRef = 692F1DBF2F91F5D10037745D /* dictzip.xcodeproj */;
 				},
+				{
+					ProductGroup = 698985FB2FDE451E00D4E83D /* Products */;
+					ProjectRef = 698985F82FDE451E00D4E83D /* dictzip.xcodeproj */;
+				},
 			);
 			projectRoot = "";
 			targets = (
 				692F0EDE2F85F91B0037745D /* stardict */,
-				692F11E92F87795B0037745D /* sd_tests */,
+				692F11E92F87795B0037745D /* stardict-tests */,
 			);
 		};
 /* End PBXProject section */
@@ -466,7 +478,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		692F11EE2F87795C0037745D /* Build configuration list for PBXNativeTarget "sd_tests" */ = {
+		692F11EE2F87795C0037745D /* Build configuration list for PBXNativeTarget "stardict-tests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				692F11EF2F87795C0037745D /* Debug */,
