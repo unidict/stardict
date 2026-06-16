@@ -37,6 +37,7 @@
 		692F11EA2F87795B0037745D /* stardict-tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "stardict-tests"; sourceTree = BUILT_PRODUCTS_DIR; };
 		692F1DBF2F91F5D10037745D /* dictzip.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = dictzip.xcodeproj; sourceTree = "<group>"; };
 		698985F82FDE451E00D4E83D /* dictzip.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = dictzip.xcodeproj; sourceTree = "<group>"; };
+		6989A2462FDED1DF00D4E83D /* dictzip.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = dictzip.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -173,6 +174,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		6989A2492FDED1DF00D4E83D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -261,6 +269,10 @@
 			productRefGroup = 692F0EE02F85F91B0037745D /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 6989A2492FDED1DF00D4E83D /* Products */;
+					ProjectRef = 6989A2462FDED1DF00D4E83D /* dictzip.xcodeproj */;
+				},
 				{
 					ProductGroup = 692F1DC32F91F5D10037745D /* Products */;
 					ProjectRef = 692F1DBF2F91F5D10037745D /* dictzip.xcodeproj */;

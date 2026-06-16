@@ -6,3 +6,6 @@ xcuserdata/
 build/
 cmake-build-*/
 CMakeUserPresets.json
+
+# Generated UDX index / test artifacts
+*.udx

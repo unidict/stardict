@@ -13,7 +13,9 @@ find_package(ZLIB REQUIRED)
 
 # ---------- dictzip submodule ----------
 set(DICTZIP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(deps/dictzip)
+if(NOT TARGET dictzip)
+    add_subdirectory(deps/dictzip)
+endif()
 
 # ---------- Library ----------
 file(GLOB STARDICT_SOURCES src/*.c)
